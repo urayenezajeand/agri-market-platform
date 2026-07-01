@@ -1,0 +1,525 @@
+import { useState, useEffect } from 'react';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
+import { useCart } from '../context/cartContext';
+import { useToast } from '../context/ToastContext';
+import { API_BASE_URL } from '../config';
+
+export default function Navbar() {
+  const { user, logout, isAuthenticated, isVendor } = useAuth();
+  const { cartCount, addToCart } = useCart();
+  const { showToast } = useToast();
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+
+  // Initialize search input state from current query parameter if present
+  const [searchInput, setSearchInput] = useState(searchParams.get('search') || '');
+
+  // Wishlist and Location Drawer States
+  const [wishlist, setWishlist] = useState<any[]>([]);
+  const [isWishlistOpen, setIsWishlistOpen] = useState(false);
+  const [isLocationOpen, setIsLocationOpen] = useState(false);
+  const [deliveryLocation, setDeliveryLocation] = useState(localStorage.getItem('delivery_location') || 'Choose location');
+
+  // Load wishlist on init and register event listeners
+  const loadWishlist = () => {
+    try {
+      const stored = localStorage.getItem('wishlist_items');
+      if (stored) {
+        setWishlist(JSON.parse(stored));
+      } else {
+        setWishlist([]);
+      }
+    } catch (e) {
+      setWishlist([]);
+    }
+  };
+
+  useEffect(() => {
+    loadWishlist();
+    const handleWishlistUpdate = () => loadWishlist();
+    window.addEventListener('wishlist-updated', handleWishlistUpdate);
+    return () => window.removeEventListener('wishlist-updated', handleWishlistUpdate);
+  }, []);
+
+  const handleLogout = () => {
+    logout();
+    showToast('Logged out successfully.', 'info');
+    navigate('/login');
+  };
+
+  // Search Autocomplete Suggestion States
+  const [allProducts, setAllProducts] = useState<any[]>([]);
+  const [suggestions, setSuggestions] = useState<any[]>([]);
+
+  // Pre-fetch all products for filtering suggestions
+  useEffect(() => {
+    const fetchAllProductsForSearch = async () => {
+      try {
+        const res = await fetch(`${API_BASE_URL}/api/products`);
+        if (res.ok) {
+          const data = await res.json();
+          setAllProducts(data);
+        }
+      } catch (e) {
+        console.error('Failed to pre-fetch search products list:', e);
+      }
+    };
+    fetchAllProductsForSearch();
+  }, []);
+
+  // Listen for outside clicks to close suggestion dropdown
+  useEffect(() => {
+    const handleOutsideClick = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      if (!target.closest('#search-form-container')) {
+        setSuggestions([]);
+      }
+    };
+    window.addEventListener('click', handleOutsideClick);
+    return () => window.removeEventListener('click', handleOutsideClick);
+  }, []);
+
+  const handleSearchChange = (value: string) => {
+    setSearchInput(value);
+    if (value.trim().length >= 1) {
+      const filtered = allProducts.filter(p => 
+        p.name.toLowerCase().includes(value.toLowerCase()) || 
+        p.category.toLowerCase().includes(value.toLowerCase())
+      ).slice(0, 6);
+      setSuggestions(filtered);
+    } else {
+      setSuggestions([]);
+    }
+  };
+
+  const handleSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setSuggestions([]);
+    navigate(`/?search=${encodeURIComponent(searchInput.trim())}`);
+  };
+
+  return (
+    <>
+      {/* 1. CLEAN MODERN WHITE HEADER WITH ACCENTS */}
+      <header className="bg-white border-b border-slate-200 text-slate-800 px-4 py-3 shadow-sm z-50 sticky top-0">
+        <div className="mx-auto max-w-7xl flex flex-col md:flex-row items-center justify-between gap-4">
+          
+          {/* Logo & Delivery Location */}
+          <div className="flex items-center space-x-6 w-full md:w-auto justify-between md:justify-start">
+            <Link to="/" className="flex items-center space-x-2 text-xl font-bold tracking-tight">
+              {/* Leaf Logo SVG (Emerald green) */}
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-7 w-7 text-emerald-600 fill-current" viewBox="0 0 24 24">
+                <path d="M17 8C8 10 5.9 16.12 5 19c2.88-.9 9-3 11-12h1zm2-3c-3 1-13.22 4.78-15 16 0 0 2.22-11.22 16-15.5V5zM4.5 19A1.5 1.5 0 113 20.5 1.5 1.5 0 014.5 19z"/>
+              </svg>
+              <span className="text-slate-900 font-black text-xl tracking-tight">
+                Agri<span className="text-emerald-600">Market</span>
+              </span>
+            </Link>
+
+            {/* Delivery Location badge */}
+            <div 
+              onClick={() => setIsLocationOpen(true)}
+              className="hidden lg:flex items-center space-x-1.5 text-xs text-slate-500 pl-4 border-l border-slate-200 cursor-pointer hover:opacity-85 transition-opacity"
+            >
+              {/* Pin SVG */}
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-rose-500 fill-none stroke-current stroke-2" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+              </svg>
+              <div>
+                <p className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">Deliver to</p>
+                <p className="font-bold text-slate-800 leading-tight truncate max-w-[100px]">{deliveryLocation}</p>
+              </div>
+            </div>
+            
+            {/* Mobile Cart Icon */}
+            <Link to="/cart" className="relative md:hidden flex items-center p-2 text-slate-700 hover:text-emerald-600 transition-colors">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-current fill-none stroke-current stroke-2" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+              </svg>
+              {cartCount > 0 && (
+                <span className="absolute top-0 right-0 flex h-4.5 w-4.5 items-center justify-center rounded-full bg-emerald-600 text-[9px] font-bold text-white shadow-md animate-pulse">
+                  {cartCount}
+                </span>
+              )}
+            </Link>
+          </div>
+
+          {/* Central Search Bar with Autocomplete Suggestions */}
+          <div className="flex-1 max-w-xl w-full relative" id="search-form-container">
+            <form onSubmit={handleSearchSubmit} className="relative flex items-center bg-slate-50 rounded-xl overflow-hidden border border-slate-200 focus-within:border-emerald-500 focus-within:ring-2 focus-within:ring-emerald-500/10 transition-all">
+              <input
+                type="text"
+                placeholder="Search products here..."
+                value={searchInput}
+                onChange={(e) => handleSearchChange(e.target.value)}
+                className="w-full bg-transparent text-slate-800 text-sm px-4 py-2.5 focus:outline-none placeholder-slate-400 font-semibold"
+              />
+              <button 
+                type="submit"
+                className="bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-2.5 font-bold transition-all duration-300 hover:scale-[1.03] active:scale-[0.97] text-xs uppercase tracking-wider cursor-pointer flex items-center space-x-1.5"
+              >
+                {/* Search glass SVG */}
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5 text-white fill-none stroke-current stroke-2" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+                <span>Search</span>
+              </button>
+            </form>
+
+            {/* Search Suggestions Dropdown */}
+            {suggestions.length > 0 && (
+              <div className="absolute left-0 right-0 top-full mt-2 bg-white border border-slate-200 rounded-2xl shadow-xl shadow-slate-100/50 z-50 overflow-hidden divide-y divide-slate-100 max-h-[320px] overflow-y-auto">
+                <div className="bg-slate-50 px-4 py-2 text-[10px] font-bold text-slate-450 uppercase tracking-widest">
+                  Suggested Products
+                </div>
+                {suggestions.map((item) => (
+                  <div
+                    key={item.id}
+                    onClick={() => {
+                      setSearchInput(item.name);
+                      setSuggestions([]);
+                      navigate(`/product/${item.id}`);
+                    }}
+                    className="flex items-center justify-between px-4 py-3.5 hover:bg-slate-50 transition-colors cursor-pointer"
+                  >
+                    <div className="flex items-center space-x-3">
+                      {/* Thumbnail with soft gradient background */}
+                      <div className="h-10 w-10 rounded-lg bg-emerald-50 border border-slate-100 flex items-center justify-center relative overflow-hidden select-none">
+                        <span className="text-lg">
+                          {item.category === 'Vegetables' ? '🥦' : item.category === 'Grains' ? '🌾' : item.category === 'Fruits' ? '🍎' : '🥔'}
+                        </span>
+                        {item.image_url && (
+                          <img 
+                            src={item.image_url} 
+                            alt={item.name} 
+                            onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                            className="absolute inset-0 h-full w-full object-cover" 
+                          />
+                        )}
+                      </div>
+                      <div className="text-left">
+                        <h4 className="text-xs font-bold text-slate-900 leading-snug">{item.name}</h4>
+                        <span className="text-[9px] uppercase font-black tracking-wider text-slate-400 bg-slate-100 px-2 py-0.5 rounded-md mt-1 inline-block">
+                          {item.category}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <span className="text-xs font-extrabold text-emerald-600">
+                        {Number(item.price).toLocaleString()} RWF
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Accounts & lists, Wishlist, Cart */}
+          <div className="hidden md:flex items-center space-x-6 text-sm">
+            {/* Account Sign In */}
+            {isAuthenticated ? (
+              <div className="text-left text-xs">
+                <p className="text-slate-400">Hello, {user?.name.split(' ')[0]}</p>
+                <div className="flex items-center space-x-1.5 flex-wrap max-w-[170px]">
+                  <Link to="/orders" className="font-bold text-emerald-600 hover:underline">
+                    My Orders
+                  </Link>
+                  <span className="text-slate-300">•</span>
+                  <button onClick={handleLogout} className="font-bold text-slate-800 hover:text-rose-600 hover:underline text-left cursor-pointer">
+                    Logout
+                  </button>
+                  {isVendor && (
+                    <>
+                      <span className="text-slate-300">•</span>
+                      <Link to="/vendor/dashboard" className="font-bold text-orange-600 hover:underline">
+                        Dashboard
+                      </Link>
+                    </>
+                  )}
+                </div>
+              </div>
+            ) : (
+              <Link to="/login" className="text-left text-xs hover:text-emerald-600 transition-colors flex flex-col">
+                <span className="text-slate-400">Hello, sign in</span>
+                <span className="font-bold text-slate-800 text-xs">Accounts & List</span>
+              </Link>
+            )}
+
+            {/* Wishlist */}
+            <div 
+              onClick={() => setIsWishlistOpen(true)}
+              className="relative cursor-pointer text-xs text-center text-slate-500 hover:text-emerald-600 flex flex-col items-center transition-colors"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-current fill-none stroke-current stroke-2" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+              </svg>
+              <p className="font-semibold mt-0.5">Wishlist</p>
+              {wishlist.length > 0 && (
+                <span className="absolute -top-1 -right-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-rose-500 text-[8px] font-bold text-white shadow-sm">
+                  {wishlist.length}
+                </span>
+              )}
+            </div>
+
+            {/* Cart Button */}
+            <Link to="/cart" className="relative flex items-center space-x-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 px-4 py-2.5 rounded-xl border border-emerald-100 transition-all duration-300 hover:scale-[1.03] active:scale-[0.97] shadow-sm">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-emerald-700 fill-none stroke-current stroke-2" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+              </svg>
+              <div className="text-left text-xs leading-tight">
+                <p className="text-[9px] text-emerald-600 font-bold">Cart</p>
+                <p className="font-black text-emerald-950">{cartCount} items</p>
+              </div>
+            </Link>
+          </div>
+        </div>
+      </header>
+
+      {/* 2. SUBHEADER LINKS */}
+      <nav className="bg-slate-50 border-b border-slate-200 py-3 px-4 overflow-x-auto">
+        <div className="mx-auto max-w-7xl flex items-center space-x-6 text-xs sm:text-sm font-semibold text-slate-600 whitespace-nowrap">
+          <Link to="/products" className="text-emerald-600 font-bold flex items-center space-x-2 hover:text-emerald-700 transition-colors">
+            {/* Hamburger SVG */}
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-4.5 w-4.5 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
+            <span>All Categories</span>
+          </Link>
+          
+          {/* Vertical Divider */}
+          <div className="h-4 w-px bg-slate-250"></div>
+          
+          <Link 
+            to="/products" 
+            className="relative pb-0.5 hover:text-emerald-600 transition-colors duration-200 after:absolute after:bottom-0 after:left-0 after:h-0.5 after:w-0 after:bg-emerald-600 hover:after:w-full after:transition-all after:duration-300"
+          >
+            Shop
+          </Link>
+          <Link 
+            to="/products?filter=deals" 
+            className="relative pb-0.5 text-amber-600 font-bold hover:text-amber-700 transition-colors duration-200 after:absolute after:bottom-0 after:left-0 after:h-0.5 after:w-0 after:bg-amber-600 hover:after:w-full after:transition-all after:duration-300"
+          >
+            Daily Deals
+          </Link>
+          <Link 
+            to="/orders" 
+            className="relative pb-0.5 hover:text-emerald-600 transition-colors duration-200 flex items-center space-x-1.5 after:absolute after:bottom-0 after:left-0 after:h-0.5 after:w-0 after:bg-emerald-600 hover:after:w-full after:transition-all after:duration-300"
+          >
+            {/* Truck SVG */}
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0z" />
+              <path strokeLinecap="round" strokeLinejoin="round" d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 011-1v-4a1 1 0 01.4-.8l2.28-2.28A1 1 0 0117.3 8H20a1 1 0 011 1v7a1 1 0 01-1 1h-1m-6 0a2 2 0 00-4 0m9 0a2 2 0 00-4 0" />
+            </svg>
+            <span>Track Order</span>
+          </Link>
+          <Link 
+            to="/?filter=blogs" 
+            className="relative pb-0.5 hover:text-emerald-600 transition-colors duration-200 after:absolute after:bottom-0 after:left-0 after:h-0.5 after:w-0 after:bg-emerald-600 hover:after:w-full after:transition-all after:duration-300"
+          >
+            Blogs
+          </Link>
+          <Link 
+            to={isVendor ? "/vendor/dashboard" : "/register?role=vendor"} 
+            className="relative pb-0.5 text-orange-600 font-black hover:text-orange-700 transition-colors duration-200 flex items-center space-x-1.5 after:absolute after:bottom-0 after:left-0 after:h-0.5 after:w-0 after:bg-orange-600 hover:after:w-full after:transition-all after:duration-300"
+          >
+            {/* Store/Shop SVG */}
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-orange-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+            </svg>
+            <span>Sell on AgriMarket</span>
+          </Link>
+        </div>
+      </nav>
+
+      {/* Location Modal */}
+      {isLocationOpen && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl p-6 w-full max-w-sm border border-slate-100 shadow-xl relative animate-scaleIn">
+            <button 
+              onClick={() => setIsLocationOpen(false)}
+              className="absolute top-4 right-4 text-slate-400 hover:text-slate-650 font-bold text-sm cursor-pointer"
+            >
+              ✕
+            </button>
+            <h3 className="text-sm font-black text-slate-900 mb-4">Choose Delivery Location</h3>
+            
+            <div className="space-y-4">
+              <div>
+                <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5 pl-1">
+                  Province
+                </label>
+                <select 
+                  defaultValue="Kigali"
+                  className="block w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-slate-850 focus:outline-none focus:border-emerald-500 text-xs font-semibold shadow-sm"
+                >
+                  <option value="Kigali">Kigali City</option>
+                  <option value="Northern">Northern Province</option>
+                  <option value="Southern">Southern Province</option>
+                  <option value="Eastern">Eastern Province</option>
+                  <option value="Western">Western Province</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5 pl-1">
+                  District
+                </label>
+                <select 
+                  id="district-select"
+                  className="block w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-slate-850 focus:outline-none focus:border-emerald-500 text-xs font-semibold shadow-sm"
+                >
+                  <option value="Nyarugenge">Nyarugenge District</option>
+                  <option value="Gasabo">Gasabo District</option>
+                  <option value="Kicukiro">Kicukiro District</option>
+                  <option value="Musanze">Musanze District</option>
+                  <option value="Gicumbi">Gicumbi District</option>
+                  <option value="Nyagatare">Nyagatare District</option>
+                  <option value="Huye">Huye District</option>
+                  <option value="Rubavu">Rubavu District</option>
+                </select>
+              </div>
+
+              <button 
+                onClick={() => {
+                  const districtSelect = document.getElementById('district-select') as HTMLSelectElement;
+                  const selectedDistrict = districtSelect?.value || 'Kigali';
+                  setDeliveryLocation(selectedDistrict);
+                  localStorage.setItem('delivery_location', selectedDistrict);
+                  // Dispatch address update event so checkout form updates live if open
+                  window.dispatchEvent(new Event('location-changed'));
+                  showToast(`Delivery region set to ${selectedDistrict}!`, 'success');
+                  setIsLocationOpen(false);
+                }}
+                className="w-full bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl py-2.5 text-xs font-bold transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] shadow-md cursor-pointer mt-2"
+              >
+                Confirm Location
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Wishlist Drawer */}
+      {isWishlistOpen && (
+        <div className="fixed inset-0 z-50 overflow-hidden">
+          {/* Backdrop */}
+          <div 
+            onClick={() => setIsWishlistOpen(false)}
+            className="absolute inset-0 bg-slate-900/60 backdrop-blur-xs transition-opacity"
+          />
+          
+          <div className="absolute inset-y-0 right-0 max-w-full flex pl-10">
+            <div className="w-screen max-w-md bg-white shadow-xl border-l border-slate-100 flex flex-col justify-between animate-slideLeft">
+              
+              {/* Header */}
+              <div className="p-6 border-b border-slate-100 flex items-center justify-between">
+                <h2 className="text-base font-black text-slate-900 flex items-center space-x-2">
+                  <span>❤️</span>
+                  <span>My Wishlist ({wishlist.length})</span>
+                </h2>
+                <button 
+                  onClick={() => setIsWishlistOpen(false)}
+                  className="text-slate-400 hover:text-slate-650 text-sm font-bold p-1 cursor-pointer"
+                >
+                  ✕ Close
+                </button>
+              </div>
+
+              {/* Scrollable Content */}
+              <div className="flex-1 overflow-y-auto p-6 space-y-4">
+                {wishlist.length === 0 ? (
+                  <div className="text-center py-20 space-y-3">
+                    <span className="text-5xl block">🌾</span>
+                    <h3 className="text-sm font-bold text-slate-650">Your wishlist is empty</h3>
+                    <p className="text-xs text-slate-400 max-w-xs mx-auto font-medium">
+                      Crops you save by clicking the heart button on listing cards will appear here.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="divide-y divide-slate-100">
+                    {wishlist.map((item: any) => (
+                      <div key={item.id} className="flex items-center justify-between py-3.5 first:pt-0 last:pb-0">
+                        <div className="flex items-center space-x-3">
+                          {/* Image Thumbnail with fallback gradient */}
+                          <div className="h-12 w-12 rounded-lg bg-emerald-50 border border-slate-100 flex items-center justify-center relative overflow-hidden select-none">
+                            <span className="text-xl">
+                              {item.category === 'Vegetables' ? '🥦' : item.category === 'Grains' ? '🌾' : item.category === 'Fruits' ? '🍎' : '🥔'}
+                            </span>
+                            {item.image_url && (
+                              <img 
+                                src={item.image_url} 
+                                alt={item.name} 
+                                onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                                className="absolute inset-0 h-full w-full object-cover" 
+                              />
+                            )}
+                          </div>
+                          <div>
+                            <h4 className="text-xs font-bold text-slate-900 truncate max-w-[160px]">{item.name}</h4>
+                            <p className="text-xs text-emerald-600 font-extrabold">{Number(item.price).toLocaleString()} RWF</p>
+                          </div>
+                        </div>
+                        
+                        {/* Action buttons */}
+                        <div className="flex items-center space-x-2">
+                          <button
+                            onClick={() => {
+                              // Add to Cart
+                              addToCart({
+                                id: item.id,
+                                name: item.name,
+                                price: Number(item.price),
+                                image_url: item.image_url || '',
+                                vendor_id: item.vendor_id,
+                                stock: item.stock
+                              }, 1);
+                              
+                              // Remove from wishlist
+                              const updated = wishlist.filter((w) => w.id !== item.id);
+                              localStorage.setItem('wishlist_items', JSON.stringify(updated));
+                              window.dispatchEvent(new Event('wishlist-updated'));
+                              showToast(`Moved ${item.name} to cart!`, 'success');
+                            }}
+                            className="bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg px-3 py-1.5 text-[10px] font-bold shadow-sm transition-all duration-300 hover:scale-[1.05] active:scale-[0.95] cursor-pointer"
+                          >
+                            Add to Cart
+                          </button>
+                          
+                          <button
+                            onClick={() => {
+                              const updated = wishlist.filter((w) => w.id !== item.id);
+                              localStorage.setItem('wishlist_items', JSON.stringify(updated));
+                              window.dispatchEvent(new Event('wishlist-updated'));
+                            }}
+                            className="text-slate-400 hover:text-rose-600 p-1.5 cursor-pointer text-xs"
+                            title="Remove"
+                          >
+                            🗑️
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Footer */}
+              <div className="p-6 border-t border-slate-100 bg-slate-50">
+                <button 
+                  onClick={() => setIsWishlistOpen(false)}
+                  className="w-full bg-slate-900 hover:bg-slate-950 text-white rounded-xl py-3 text-xs font-bold shadow-md transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] cursor-pointer text-center"
+                >
+                  Continue Shopping
+                </button>
+              </div>
+
+            </div>
+          </div>
+        </div>
+      )}
+    </>
+  );
+}

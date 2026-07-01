@@ -1,0 +1,48 @@
+version: '3.8'
+
+services:
+  # 1. DATABASE SERVICE (PostgreSQL)
+  db:
+    image: postgres:15-alpine
+    container_name: agri_market_db
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: your_postgres_password
+      POSTGRES_DB: agri_market
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  # 2. BACKEND API SERVICE (Node/Express)
+  backend:
+    build: ./server
+    container_name: agri_market_backend
+    restart: always
+    environment:
+      PORT: 5000
+      DB_USER: postgres
+      DB_HOST: db
+      DB_DATABASE: agri_market
+      DB_PASSWORD: your_postgres_password
+      DB_PORT: 5432
+      JWT_SECRET: super_secret_agri_key_12345
+      NODE_ENV: development
+    ports:
+      - "5000:5000"
+    depends_on:
+      - db
+
+  # 3. FRONTEND SERVICE (React / Nginx)
+  frontend:
+    build: .
+    container_name: agri_market_frontend
+    restart: always
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+
+volumes:
+  pgdata:
