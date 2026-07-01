@@ -69,7 +69,7 @@ export default function Login() {
         }
       });
 
-      client.requestAccessToken();
+      client.requestAccessToken({ prompt: 'select_account' });
     } catch (err) {
       console.error(err);
       showToast('Failed to initialize Google Login popup.', 'error');
@@ -325,6 +325,16 @@ export default function Login() {
                 <div className="text-left">
                   <h4 className="text-xs font-black text-stone-800 leading-none">{googleName || 'Google User'}</h4>
                   <span className="text-[10px] text-stone-450 font-bold">{googleEmail}</span>
+                  <button 
+                    type="button"
+                    onClick={() => {
+                      setShowGooglePopup(false);
+                      handleGoogleLogin();
+                    }}
+                    className="text-[9px] text-emerald-600 hover:text-emerald-700 font-extrabold underline block mt-1 hover:scale-102 transition-all cursor-pointer"
+                  >
+                    Switch Account
+                  </button>
                 </div>
               </div>
 
