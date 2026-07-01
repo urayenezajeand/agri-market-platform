@@ -299,7 +299,7 @@ export default function Navbar() {
             Shop
           </Link>
           <Link 
-            to="/products?filter=deals" 
+            to="/deals" 
             className="relative pb-0.5 text-amber-600 font-bold hover:text-amber-700 transition-colors duration-200 after:absolute after:bottom-0 after:left-0 after:h-0.5 after:w-0 after:bg-amber-600 hover:after:w-full after:transition-all after:duration-300"
           >
             Daily Deals

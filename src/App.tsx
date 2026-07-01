@@ -4,6 +4,7 @@ import Footer from './components/Footer';
 import Home from './pages/Home';
 import ProductDetails from './pages/ProductDetails';
 import Products from './pages/Products';
+import Deals from './pages/Deals';
 import Cart from './pages/Cart';
 import Checkout from './pages/Checkout';
 import Login from './pages/Login';
@@ -20,6 +21,7 @@ export default function App() {
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/products" element={<Products />} />
+            <Route path="/deals" element={<Deals />} />
             <Route path="/product/:id" element={<ProductDetails />} />
             <Route path="/product" element={<Navigate to="/" replace />} />
             <Route path="/cart" element={<Cart />} />
