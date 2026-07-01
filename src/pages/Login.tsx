@@ -41,7 +41,7 @@ export default function Login() {
 
     try {
       const client = (window as any).google.accounts.oauth2.initTokenClient({
-        client_id: '714098016603-vmaj4k1gv1cjq1pnrtul4mbkk2b0icst.apps.googleusercontent.com',
+        client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID || '714098016603-vmaj4k1gv1cjq1pnrtul4mbkk2b0icst.apps.googleusercontent.com',
         scope: 'email profile openid',
         callback: async (tokenResponse: any) => {
           if (tokenResponse.error) {
