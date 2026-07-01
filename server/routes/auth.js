@@ -79,43 +79,14 @@ router.post('/login', async (req, res) => {
             return res.status(400).json({ error: 'Imeli cyangwa ijambo ry\'ibanga sibyo' });
         }
 
-        // Generate 6-digit OTP for login verification
-        const otp = Math.floor(100000 + Math.random() * 900000).toString();
-        const expiry = new Date(Date.now() + 5 * 60 * 1000); // 5 mins expiry
-
-        // Save OTP to DB
-        await pool.query(
-            'UPDATE users SET otp_code = $1, otp_expiry = $2 WHERE id = $3',
-            [otp, expiry, user.id]
+        // Generate JWT token
+        const token = jwt.sign(
+            { id: user.id, role: user.role },
+            process.env.JWT_SECRET,
+            { expiresIn: '24h' }
         );
 
-        // Send OTP via email in the background (prevent blocking HTTP response)
-        sendOtpEmail(email, user.name, otp).catch(err => {
-            console.error('[BACKGROUND EMAIL ERROR] Failed to send login OTP email:', err);
-            global.emailLogs = global.emailLogs || [];
-            global.emailLogs.unshift({
-                timestamp: new Date().toISOString(),
-                type: 'login_otp',
-                email: email,
-                error: err.message,
-                code: err.code,
-                stack: err.stack
-            });
-        });
-
-        // Return otpRequired status
-        const responseData = { 
-            otpRequired: true, 
-            email: email, 
-            message: 'Injiza umubare w\'ibanga woherejwe kuri imeli yawe (Please verify OTP sent to your email)'
-        };
-
-        // Only return the OTP code to frontend in development / mock mode for testing
-        if (!process.env.SMTP_USER || !process.env.SMTP_PASS || process.env.NODE_ENV === 'development') {
-            responseData.otp = otp;
-        }
-
-        res.status(200).json(responseData);
+        res.status(200).json({ token, user, message: 'Kwinjira byagenze neza!' });
 
     } catch (error) {
         console.error('Kwinjira byanze:', error);
