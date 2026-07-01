@@ -16,6 +16,15 @@ export async function initializeDatabase() {
     await pool.query(sql);
     console.log('Database tables initialized successfully.');
 
+    // Ensure OTP columns exist on users table (Dynamic migration)
+    try {
+      await pool.query("ALTER TABLE users ADD COLUMN IF NOT EXISTS otp_code VARCHAR(6)");
+      await pool.query("ALTER TABLE users ADD COLUMN IF NOT EXISTS otp_expiry TIMESTAMP");
+      console.log('OTP columns ensured on users table.');
+    } catch (e) {
+      console.error('Failed to ensure OTP columns:', e);
+    }
+
     // 1. Seed a default vendor account (Farmer Kamana) if missing
     const userCheck = await pool.query("SELECT id FROM users WHERE email = 'kamana@agrimarket.rw'");
     let vendorId;

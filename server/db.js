@@ -9,12 +9,11 @@ const { Pool } = pg;
 // Determine if we are in production
 const isProduction = process.env.NODE_ENV === 'production';
 
-// Check if a single connection URL is provided, otherwise use individual parameters
 const pool = new Pool(
     process.env.DATABASE_URL
         ? { 
             connectionString: process.env.DATABASE_URL,
-            ssl: isProduction ? { rejectUnauthorized: false } : false
+            ssl: { rejectUnauthorized: false } // Always use SSL/TLS for remote databases like Render
           }
         : {
             user: process.env.DB_USER,
@@ -22,7 +21,6 @@ const pool = new Pool(
             database: process.env.DB_DATABASE,
             password: process.env.DB_PASSWORD,
             port: parseInt(process.env.DB_PORT || '5432'),
-            // SSL is required on production databases (like Render/Railway/Heroku)
             ssl: isProduction ? { rejectUnauthorized: false } : false
         }
 );

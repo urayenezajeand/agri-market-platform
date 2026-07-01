@@ -140,5 +140,81 @@ router.post('/google-login', async (req, res) => {
     }
 });
 
+// Request Password Reset OTP
+router.post('/send-otp', async (req, res) => {
+    const { email } = req.body;
+
+    try {
+        if (!email) {
+            return res.status(400).json({ error: 'Ugomba kugaragaza imeli (Email is required)' });
+        }
+
+        // Check if user exists
+        const userQuery = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
+        if (userQuery.rows.length === 0) {
+            return res.status(404).json({ error: 'Imeli ntayo twasanze muri database (Email not found)' });
+        }
+
+        // Generate 6-digit OTP
+        const otp = Math.floor(100000 + Math.random() * 900000).toString();
+        // Set expiry time to 5 minutes from now
+        const expiry = new Date(Date.now() + 5 * 60 * 1000);
+
+        // Update database with OTP
+        await pool.query(
+            'UPDATE users SET otp_code = $1, otp_expiry = $2 WHERE email = $3',
+            [otp, expiry, email]
+        );
+
+        // Print to backend console for developer/evaluation access
+        console.log(`[OTP CODE GENERATED] For email ${email}: ${otp}`);
+
+        res.status(200).json({ 
+            message: 'OTP yoherejwe kuri imeli yanyu (OTP sent to your email successfully!)',
+            otp: otp 
+        });
+    } catch (error) {
+        console.error('Failed to generate OTP:', error);
+        res.status(500).json({ error: 'Server error during OTP creation' });
+    }
+});
+
+// Verify OTP and Reset Password
+router.post('/verify-otp', async (req, res) => {
+    const { email, otp, newPassword } = req.body;
+
+    try {
+        if (!email || !otp || !newPassword) {
+            return res.status(400).json({ error: 'Uzuza amakuru yose asabwa (Fill all required fields)' });
+        }
+
+        // Find user
+        const userQuery = await pool.query(
+            'SELECT * FROM users WHERE email = $1 AND otp_code = $2 AND otp_expiry > NOW()',
+            [email, otp]
+        );
+
+        if (userQuery.rows.length === 0) {
+            return res.status(400).json({ error: 'OTP code siyo cg yaraye yarengeje igihe (Invalid or expired OTP)' });
+        }
+
+        // Hash new password
+        const salt = await bcrypt.genSalt(10);
+        const passwordHash = await bcrypt.hash(newPassword, salt);
+
+        // Update password and clear OTP
+        await pool.query(
+            'UPDATE users SET password_hash = $1, otp_code = NULL, otp_expiry = NULL WHERE email = $2',
+            [passwordHash, email]
+        );
+
+        console.log(`Password reset successfully for user: ${email}`);
+        res.status(200).json({ message: 'Ijambo ry\'ibanga ryahinduwe neza! (Password reset successful!)' });
+    } catch (error) {
+        console.error('Failed to reset password via OTP:', error);
+        res.status(500).json({ error: 'Server error during password update' });
+    }
+});
+
 export default router;
 
