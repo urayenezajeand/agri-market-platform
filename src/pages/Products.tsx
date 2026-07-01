@@ -148,14 +148,14 @@ export default function Products() {
 
   if (loading) {
     return (
-      <div className="flex min-h-[calc(100vh-140px)] items-center justify-center bg-slate-50">
+      <div className="flex min-h-[calc(100vh-140px)] items-center justify-center bg-transparent">
         <div className="h-10 w-10 animate-spin rounded-full border-4 border-emerald-500 border-t-transparent"></div>
       </div>
     );
   }
 
   return (
-    <div className="bg-slate-50 min-h-screen pb-16 font-sans">
+    <div className="bg-transparent min-h-screen pb-16 font-sans">
       <div className="mx-auto max-w-7xl px-4 py-8">
         
         <div className="mb-6 flex flex-col md:flex-row md:items-center justify-between gap-4">

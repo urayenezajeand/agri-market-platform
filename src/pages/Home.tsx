@@ -213,7 +213,7 @@ export default function Home() {
   };
 
   return (
-    <div className="bg-slate-50 min-h-screen pb-16 font-sans">
+    <div className="bg-transparent min-h-screen pb-16 font-sans">
       <div className="mx-auto max-w-7xl px-4 py-6">
         
         {/* ==========================================

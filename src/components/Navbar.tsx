@@ -102,7 +102,7 @@ export default function Navbar() {
   return (
     <>
       {/* 1. CLEAN MODERN WHITE HEADER WITH ACCENTS */}
-      <header className="bg-white border-b border-slate-200 text-slate-800 px-4 py-3 shadow-sm z-50 sticky top-0">
+      <header className="bg-white border-b border-[#EFECE6] text-stone-850 px-4 py-3 shadow-sm z-50 sticky top-0">
         <div className="mx-auto max-w-7xl flex flex-col md:flex-row items-center justify-between gap-4">
           
           {/* Logo & Delivery Location */}
@@ -279,7 +279,7 @@ export default function Navbar() {
       </header>
 
       {/* 2. SUBHEADER LINKS */}
-      <nav className="bg-slate-50 border-b border-slate-200 py-3 px-4 overflow-x-auto">
+      <nav className="bg-[#F7F5F0] border-b border-[#EFECE6] py-3 px-4 overflow-x-auto">
         <div className="mx-auto max-w-7xl flex items-center space-x-6 text-xs sm:text-sm font-semibold text-slate-600 whitespace-nowrap">
           <Link to="/products" className="text-emerald-600 font-bold flex items-center space-x-2 hover:text-emerald-700 transition-colors">
             {/* Hamburger SVG */}

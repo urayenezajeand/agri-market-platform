@@ -20,7 +20,7 @@ export default function Cart() {
   const totalPayment = cartTotal + deliveryFee;
 
   return (
-    <div className="min-h-[calc(100vh-62px)] bg-slate-50/50 pb-24 pt-4 px-4 sm:px-6">
+    <div className="min-h-[calc(100vh-62px)] bg-transparent pb-24 pt-4 px-4 sm:px-6">
       <div className="mx-auto max-w-3xl">
         
         {/* Header */}
