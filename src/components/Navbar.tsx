@@ -19,6 +19,7 @@ export default function Navbar() {
   const [wishlist, setWishlist] = useState<any[]>([]);
   const [isWishlistOpen, setIsWishlistOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
 
   // Load wishlist on init and register event listeners
   const loadWishlist = () => {
@@ -39,6 +40,18 @@ export default function Navbar() {
     const handleWishlistUpdate = () => loadWishlist();
     window.addEventListener('wishlist-updated', handleWishlistUpdate);
     return () => window.removeEventListener('wishlist-updated', handleWishlistUpdate);
+  }, []);
+
+  // Close dropdown on click outside
+  useEffect(() => {
+    const handleOutsideClick = (e: MouseEvent) => {
+      const dropdown = document.getElementById('profile-dropdown-container');
+      if (dropdown && !dropdown.contains(e.target as Node)) {
+        setIsProfileDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleOutsideClick);
+    return () => document.removeEventListener('mousedown', handleOutsideClick);
   }, []);
 
   const handleLogout = () => {
@@ -204,40 +217,23 @@ export default function Navbar() {
             )}
           </div>
 
-          {/* 4. Accounts & lists, Wishlist, Cart */}
+          {/* 4. Cart, Wishlist, Unified Accounts Dropdown */}
           <div className="flex items-center space-x-4 md:space-x-6 text-sm shrink-0">
-            {/* Account Sign In */}
-            {isAuthenticated ? (
-              <div className="text-left text-xs hidden sm:block">
-                <p className="text-slate-400">Hello, {user?.name.split(' ')[0]}</p>
-                <div className="flex items-center space-x-1.5 flex-wrap max-w-[170px]">
-                  <Link to="/orders" className="font-bold text-emerald-600 hover:underline">
-                    My Orders
-                  </Link>
-                  <span className="text-slate-300">•</span>
-                  <Link to="/settings" className="font-bold text-stone-600 hover:text-emerald-600 hover:underline">
-                    Settings
-                  </Link>
-                  <span className="text-slate-300">•</span>
-                  <button onClick={handleLogout} className="font-bold text-slate-800 hover:text-rose-600 hover:underline text-left cursor-pointer">
-                    Logout
-                  </button>
-                  {isVendor && (
-                    <>
-                      <span className="text-slate-300">•</span>
-                      <Link to="/vendor/dashboard" className="font-bold text-orange-600 hover:underline">
-                        Dashboard
-                      </Link>
-                    </>
-                  )}
-                </div>
+            {/* Cart Button */}
+            <Link to="/cart" className="relative flex items-center space-x-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 px-3.5 py-2.5 rounded-xl border border-emerald-100 transition-all duration-300 hover:scale-[1.03] active:scale-[0.97] shadow-sm">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-emerald-700 fill-none stroke-current stroke-2" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+              </svg>
+              <div className="text-left text-xs leading-tight hidden md:block">
+                <p className="text-[9px] text-emerald-600 font-bold">Cart</p>
+                <p className="font-black text-emerald-950">{cartCount} items</p>
               </div>
-            ) : (
-              <Link to="/login" className="text-left text-xs hover:text-emerald-600 transition-colors flex flex-col hidden sm:flex">
-                <span className="text-slate-400">Hello, sign in</span>
-                <span className="font-bold text-slate-800 text-xs">Accounts & List</span>
-              </Link>
-            )}
+              {cartCount > 0 && (
+                <span className="absolute md:hidden -top-1 -right-1 flex h-4.5 w-4.5 items-center justify-center rounded-full bg-emerald-600 text-[8px] font-bold text-white shadow-sm animate-pulse">
+                  {cartCount}
+                </span>
+              )}
+            </Link>
 
             {/* Wishlist */}
             <div 
@@ -255,21 +251,81 @@ export default function Navbar() {
               )}
             </div>
 
-            {/* Cart Button */}
-            <Link to="/cart" className="relative flex items-center space-x-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 px-3.5 py-2.5 rounded-xl border border-emerald-100 transition-all duration-300 hover:scale-[1.03] active:scale-[0.97] shadow-sm">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-emerald-700 fill-none stroke-current stroke-2" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
-              </svg>
-              <div className="text-left text-xs leading-tight hidden md:block">
-                <p className="text-[9px] text-emerald-600 font-bold">Cart</p>
-                <p className="font-black text-emerald-950">{cartCount} items</p>
+            {/* Account Sign In Dropdown in the corner */}
+            {isAuthenticated ? (
+              <div className="relative" id="profile-dropdown-container">
+                <button 
+                  onClick={() => setIsProfileDropdownOpen(!isProfileDropdownOpen)}
+                  className="flex items-center space-x-2 text-left bg-slate-50 hover:bg-slate-100/80 text-stone-800 px-3 py-2 rounded-xl border border-slate-200 transition-all cursor-pointer font-bold text-xs select-none"
+                >
+                  <div className="h-5.5 w-5.5 rounded-full bg-emerald-600 text-white flex items-center justify-center font-black text-[10px] uppercase">
+                    {user?.name.charAt(0)}
+                  </div>
+                  <span className="truncate max-w-[90px] hidden sm:inline">{user?.name.split(' ')[0]}</span>
+                  <svg xmlns="http://www.w3.org/2000/svg" className={`h-3.5 w-3.5 text-slate-400 transition-transform duration-200 ${isProfileDropdownOpen ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
+
+                {isProfileDropdownOpen && (
+                  <div className="absolute right-0 mt-2 w-48 bg-white border border-slate-200 rounded-2xl shadow-xl shadow-slate-105/50 z-50 overflow-hidden divide-y divide-slate-100 py-1">
+                    <div className="px-4 py-2.5 bg-slate-50/50">
+                      <p className="text-[9px] uppercase font-black tracking-widest text-slate-400">Logged in as</p>
+                      <p className="text-xs font-bold text-slate-900 truncate">{user?.name}</p>
+                      <span className="inline-block mt-1 text-[8px] font-black uppercase tracking-wider bg-emerald-50 text-emerald-700 px-1.5 py-0.5 rounded">
+                        {user?.role === 'vendor' ? 'Seller / Farmer' : 'Buyer'}
+                      </span>
+                    </div>
+                    
+                    <div className="py-1">
+                      <Link 
+                        to="/orders" 
+                        onClick={() => setIsProfileDropdownOpen(false)}
+                        className="flex items-center space-x-2 px-4 py-2.5 text-xs font-bold text-slate-700 hover:bg-slate-50 hover:text-emerald-600 transition-colors"
+                      >
+                        <span>📦</span>
+                        <span>My Orders</span>
+                      </Link>
+                      <Link 
+                        to="/settings" 
+                        onClick={() => setIsProfileDropdownOpen(false)}
+                        className="flex items-center space-x-2 px-4 py-2.5 text-xs font-bold text-slate-700 hover:bg-slate-50 hover:text-emerald-600 transition-colors"
+                      >
+                        <span>⚙️</span>
+                        <span>Settings</span>
+                      </Link>
+                      {isVendor && (
+                        <Link 
+                          to="/vendor/dashboard" 
+                          onClick={() => setIsProfileDropdownOpen(false)}
+                          className="flex items-center space-x-2 px-4 py-2.5 text-xs font-bold text-orange-600 hover:bg-slate-50 transition-colors"
+                        >
+                          <span>📊</span>
+                          <span>Dashboard</span>
+                        </Link>
+                      )}
+                    </div>
+
+                    <div className="py-1">
+                      <button 
+                        onClick={() => {
+                          handleLogout();
+                          setIsProfileDropdownOpen(false);
+                        }}
+                        className="flex w-full items-center space-x-2 px-4 py-2.5 text-xs font-bold text-rose-600 hover:bg-rose-50 transition-colors text-left cursor-pointer"
+                      >
+                        <span>🚪</span>
+                        <span>Logout</span>
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
-              {cartCount > 0 && (
-                <span className="absolute md:hidden -top-1 -right-1 flex h-4.5 w-4.5 items-center justify-center rounded-full bg-emerald-600 text-[8px] font-bold text-white shadow-sm animate-pulse">
-                  {cartCount}
-                </span>
-              )}
-            </Link>
+            ) : (
+              <Link to="/login" className="flex items-center space-x-1.5 bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2.5 rounded-xl transition-all duration-300 hover:scale-[1.03] active:scale-[0.97] font-bold text-xs shadow-sm">
+                <span>Sign In</span>
+              </Link>
+            )}
           </div>
         </div>
       </header>

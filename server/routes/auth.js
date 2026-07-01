@@ -92,6 +92,15 @@ router.post('/login', async (req, res) => {
         // Send OTP via email in the background (prevent blocking HTTP response)
         sendOtpEmail(email, user.name, otp).catch(err => {
             console.error('[BACKGROUND EMAIL ERROR] Failed to send login OTP email:', err);
+            global.emailLogs = global.emailLogs || [];
+            global.emailLogs.unshift({
+                timestamp: new Date().toISOString(),
+                type: 'login_otp',
+                email: email,
+                error: err.message,
+                code: err.code,
+                stack: err.stack
+            });
         });
 
         // Return otpRequired status
@@ -242,6 +251,15 @@ router.post('/send-otp', async (req, res) => {
         // Send OTP via email (Gmail/SMTP) in the background (prevent blocking HTTP response)
         sendOtpEmail(email, user.name, otp).catch(err => {
             console.error('[BACKGROUND EMAIL ERROR] Failed to send password reset OTP:', err);
+            global.emailLogs = global.emailLogs || [];
+            global.emailLogs.unshift({
+                timestamp: new Date().toISOString(),
+                type: 'password_reset_otp',
+                email: email,
+                error: err.message,
+                code: err.code,
+                stack: err.stack
+            });
         });
 
         const responseData = { 
@@ -367,6 +385,8 @@ router.put('/password', authenticateToken, async (req, res) => {
         console.error('Failed to update password:', error);
         res.status(500).json({ error: 'Server error during password update' });
     }
+});
+
 // Test Email Route for Diagnostics
 router.get('/test-email', async (req, res) => {
     const targetEmail = req.query.email || 'urayenezajeand@gmail.com';
@@ -388,6 +408,16 @@ router.get('/test-email', async (req, res) => {
             stack: error.stack 
         });
     }
+});
+
+// Retrieve email dispatch logs for debugging
+router.get('/email-logs', (req, res) => {
+    const logs = global.emailLogs || [];
+    res.status(200).json({
+        smtp_configured: !!(process.env.SMTP_USER && process.env.SMTP_PASS),
+        smtp_user: process.env.SMTP_USER || 'Not Set',
+        logs: logs
+    });
 });
 
 export default router;
