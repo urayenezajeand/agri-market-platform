@@ -89,8 +89,10 @@ router.post('/login', async (req, res) => {
             [otp, expiry, user.id]
         );
 
-        // Send OTP via email
-        await sendOtpEmail(email, user.name, otp);
+        // Send OTP via email in the background (prevent blocking HTTP response)
+        sendOtpEmail(email, user.name, otp).catch(err => {
+            console.error('[BACKGROUND EMAIL ERROR] Failed to send login OTP email:', err);
+        });
 
         // Return otpRequired status
         res.status(200).json({ 
@@ -231,8 +233,10 @@ router.post('/send-otp', async (req, res) => {
 
         const user = userQuery.rows[0];
 
-        // Send OTP via email (Gmail/SMTP)
-        await sendOtpEmail(email, user.name, otp);
+        // Send OTP via email (Gmail/SMTP) in the background (prevent blocking HTTP response)
+        sendOtpEmail(email, user.name, otp).catch(err => {
+            console.error('[BACKGROUND EMAIL ERROR] Failed to send password reset OTP:', err);
+        });
 
         res.status(200).json({ 
             message: 'OTP yoherejwe kuri imeli yanyu (OTP sent to your email successfully!)',

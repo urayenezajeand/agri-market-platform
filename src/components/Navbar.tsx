@@ -18,6 +18,7 @@ export default function Navbar() {
   // Wishlist Drawer States
   const [wishlist, setWishlist] = useState<any[]>([]);
   const [isWishlistOpen, setIsWishlistOpen] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   // Load wishlist on init and register event listeners
   const loadWishlist = () => {
@@ -104,7 +105,18 @@ export default function Navbar() {
         <div className="mx-auto max-w-7xl flex items-center justify-between gap-4">
           
           {/* Logo & Mobile Menu Buttons */}
-          <div className="flex items-center space-x-6 shrink-0">
+          <div className="flex items-center space-x-3 md:space-x-6 shrink-0">
+            {/* Hamburger Toggle Button */}
+            <button 
+              onClick={() => setIsMobileMenuOpen(true)}
+              className="lg:hidden p-1 text-slate-700 hover:text-emerald-600 focus:outline-none cursor-pointer"
+              title="Open Menu"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-6.5 w-6.5 stroke-current stroke-[2.5] fill-none" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
+            </button>
+
             <Link to="/" className="flex items-center space-x-2 text-xl font-bold tracking-tight">
               {/* Leaf Logo SVG (Emerald green) */}
               <svg xmlns="http://www.w3.org/2000/svg" className="h-7 w-7 text-emerald-600 fill-current" viewBox="0 0 24 24">
@@ -432,6 +444,152 @@ export default function Navbar() {
                 </button>
               </div>
 
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 4. MOBILE MENU DRAWER */}
+      {isMobileMenuOpen && (
+        <div className="fixed inset-0 z-50 overflow-hidden lg:hidden">
+          {/* Backdrop */}
+          <div 
+            onClick={() => setIsMobileMenuOpen(false)}
+            className="absolute inset-0 bg-slate-900/60 backdrop-blur-xs transition-opacity"
+          />
+          
+          {/* Slide-out Menu Panel */}
+          <div className="absolute inset-y-0 left-0 max-w-full flex pr-10">
+            <div className="w-screen max-w-xs bg-white shadow-xl flex flex-col justify-between animate-slideRight">
+              <div>
+                {/* Header */}
+                <div className="p-5 border-b border-slate-100 flex items-center justify-between bg-emerald-50/50">
+                  <Link 
+                    to="/" 
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="flex items-center space-x-2 text-lg font-bold tracking-tight"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-emerald-600 fill-current" viewBox="0 0 24 24">
+                      <path d="M17 8C8 10 5.9 16.12 5 19c2.88-.9 9-3 11-12h1zm2-3c-3 1-13.22 4.78-15 16 0 0 2.22-11.22 16-15.5V5zM4.5 19A1.5 1.5 0 113 20.5 1.5 1.5 0 014.5 19z"/>
+                    </svg>
+                    <span className="text-slate-900 font-black tracking-tight">AgriMarket</span>
+                  </Link>
+                  <button 
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="text-slate-400 hover:text-slate-650 font-bold text-sm cursor-pointer"
+                  >
+                    ✕ Close
+                  </button>
+                </div>
+
+                {/* Profile Section inside Mobile Menu */}
+                <div className="p-5 border-b border-slate-100 bg-slate-50/50">
+                  {isAuthenticated ? (
+                    <div className="space-y-1">
+                      <p className="text-[10px] uppercase font-black tracking-widest text-slate-400">Signed In As</p>
+                      <p className="font-extrabold text-slate-900 text-sm">{user?.name}</p>
+                      <p className="text-xs text-slate-500">{user?.email}</p>
+                      <span className="inline-block mt-2 text-[9px] uppercase font-black tracking-wider px-2 py-0.5 rounded bg-emerald-100 text-emerald-800">
+                        {user?.role === 'vendor' ? 'Farmer / Seller' : 'Buyer'}
+                      </span>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      <p className="text-xs font-bold text-slate-500">Welcome to AgriMarket!</p>
+                      <Link 
+                        to="/login"
+                        onClick={() => setIsMobileMenuOpen(false)}
+                        className="block w-full text-center bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl py-2 text-xs font-bold transition-all shadow-sm"
+                      >
+                        Sign In
+                      </Link>
+                    </div>
+                  )}
+                </div>
+
+                {/* Navigation Links List */}
+                <div className="p-5 space-y-4">
+                  <p className="text-[10px] uppercase font-black tracking-widest text-slate-400 mb-2">Navigation</p>
+                  
+                  <Link 
+                    to="/products" 
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="flex items-center space-x-3 text-slate-700 font-bold hover:text-emerald-600 transition-colors py-1 text-sm"
+                  >
+                    <span>🌾</span>
+                    <span>Shop Products</span>
+                  </Link>
+
+                  <Link 
+                    to="/deals" 
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="flex items-center space-x-3 text-amber-600 font-black hover:text-amber-705 transition-colors py-1 text-sm"
+                  >
+                    <span>🔥</span>
+                    <span>Daily Deals</span>
+                  </Link>
+
+                  <Link 
+                    to="/orders" 
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="flex items-center space-x-3 text-slate-700 font-bold hover:text-emerald-600 transition-colors py-1 text-sm"
+                  >
+                    <span>📦</span>
+                    <span>Track Order / My Orders</span>
+                  </Link>
+
+                  <Link 
+                    to="/?filter=blogs" 
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="flex items-center space-x-3 text-slate-700 font-bold hover:text-emerald-600 transition-colors py-1 text-sm"
+                  >
+                    <span>📰</span>
+                    <span>Blogs & News</span>
+                  </Link>
+
+                  <Link 
+                    to={isVendor ? "/vendor/dashboard" : "/register?role=vendor"} 
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="flex items-center space-x-3 text-orange-600 font-black hover:text-orange-705 transition-colors py-1 text-sm"
+                  >
+                    <span>🏪</span>
+                    <span>Sell on AgriMarket</span>
+                  </Link>
+                </div>
+              </div>
+
+              {/* Bottom Actions */}
+              <div className="p-5 border-t border-slate-100 bg-slate-50 space-y-3">
+                {isAuthenticated && (
+                  <>
+                    <Link 
+                      to="/settings"
+                      onClick={() => setIsMobileMenuOpen(false)}
+                      className="block w-full text-center bg-white border border-slate-200 text-slate-700 hover:bg-slate-55 rounded-xl py-2.5 text-xs font-bold shadow-sm"
+                    >
+                      ⚙️ User Settings
+                    </Link>
+                    {isVendor && (
+                      <Link 
+                        to="/vendor/dashboard"
+                        onClick={() => setIsMobileMenuOpen(false)}
+                        className="block w-full text-center bg-indigo-50 text-indigo-700 hover:bg-indigo-100 rounded-xl py-2.5 text-xs font-bold"
+                      >
+                        📊 Vendor Dashboard
+                      </Link>
+                    )}
+                    <button 
+                      onClick={() => {
+                        handleLogout();
+                        setIsMobileMenuOpen(false);
+                      }}
+                      className="block w-full text-center bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-xl py-2.5 text-xs font-bold cursor-pointer"
+                    >
+                      🚪 Logout
+                    </button>
+                  </>
+                )}
+              </div>
             </div>
           </div>
         </div>
