@@ -99,12 +99,12 @@ export default function Navbar() {
 
   return (
     <>
-      {/* 1. CLEAN MODERN WHITE HEADER WITH ACCENTS */}
-      <header className="bg-white border-b border-[#DFDACA] text-stone-800 px-4 py-3 shadow-sm z-50 sticky top-0">
-        <div className="mx-auto max-w-7xl flex flex-col md:flex-row items-center justify-between gap-4">
+      {/* 1. CLEAN MODERN UNIFIED HEADER */}
+      <header className="bg-white border-b border-[#DFDACA] text-stone-800 px-4 py-3.5 shadow-sm z-50 sticky top-0">
+        <div className="mx-auto max-w-7xl flex items-center justify-between gap-4">
           
-          {/* Logo & Delivery Location */}
-          <div className="flex items-center space-x-6 w-full md:w-auto justify-between md:justify-start">
+          {/* Logo & Mobile Menu Buttons */}
+          <div className="flex items-center space-x-6 shrink-0">
             <Link to="/" className="flex items-center space-x-2 text-xl font-bold tracking-tight">
               {/* Leaf Logo SVG (Emerald green) */}
               <svg xmlns="http://www.w3.org/2000/svg" className="h-7 w-7 text-emerald-600 fill-current" viewBox="0 0 24 24">
@@ -114,39 +114,35 @@ export default function Navbar() {
                 Agri<span className="text-emerald-600">Market</span>
               </span>
             </Link>
-            
-            {/* Mobile Cart Icon */}
-            <Link to="/cart" className="relative md:hidden flex items-center p-2 text-slate-700 hover:text-emerald-600 transition-colors">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-current fill-none stroke-current stroke-2" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
-              </svg>
-              {cartCount > 0 && (
-                <span className="absolute top-0 right-0 flex h-4.5 w-4.5 items-center justify-center rounded-full bg-emerald-600 text-[9px] font-bold text-white shadow-md animate-pulse">
-                  {cartCount}
-                </span>
-              )}
-            </Link>
           </div>
 
-          {/* Central Search Bar with Autocomplete Suggestions */}
-          <div className="flex-1 max-w-xl w-full relative" id="search-form-container">
+          {/* 2. Unified Navigation Links (Desktop only, hidden on mobile) */}
+          <div className="hidden lg:flex items-center space-x-5 text-xs font-bold text-stone-600 whitespace-nowrap">
+            <Link to="/products" className="hover:text-emerald-600 transition-colors">Shop</Link>
+            <Link to="/deals" className="text-amber-600 font-extrabold hover:text-amber-705 transition-colors">Daily Deals</Link>
+            <Link to="/orders" className="hover:text-emerald-600 transition-colors">Track Order</Link>
+            <Link to="/?filter=blogs" className="hover:text-emerald-600 transition-colors">Blogs</Link>
+            <Link to={isVendor ? "/vendor/dashboard" : "/register?role=vendor"} className="text-orange-600 font-black hover:text-orange-705 transition-colors">Sell on AgriMarket</Link>
+          </div>
+
+          {/* 3. Central Search Bar with Autocomplete Suggestions */}
+          <div className="flex-1 max-w-xs relative hidden md:block" id="search-form-container">
             <form onSubmit={handleSearchSubmit} className="relative flex items-center bg-slate-50 rounded-xl overflow-hidden border border-slate-200 focus-within:border-emerald-500 focus-within:ring-2 focus-within:ring-emerald-500/10 transition-all">
               <input
                 type="text"
-                placeholder="Search products here..."
+                placeholder="Search products..."
                 value={searchInput}
                 onChange={(e) => handleSearchChange(e.target.value)}
-                className="w-full bg-transparent text-slate-800 text-sm px-4 py-2.5 focus:outline-none placeholder-slate-400 font-semibold"
+                className="w-full bg-transparent text-slate-800 text-xs px-3.5 py-2.5 focus:outline-none placeholder-slate-400 font-semibold"
               />
               <button 
                 type="submit"
-                className="bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-2.5 font-bold transition-all duration-300 hover:scale-[1.03] active:scale-[0.97] text-xs uppercase tracking-wider cursor-pointer flex items-center space-x-1.5"
+                className="bg-emerald-600 hover:bg-emerald-700 text-white px-3.5 py-2.5 font-bold transition-all text-xs cursor-pointer flex items-center"
               >
                 {/* Search glass SVG */}
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5 text-white fill-none stroke-current stroke-2" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                 </svg>
-                <span>Search</span>
               </button>
             </form>
 
@@ -164,12 +160,12 @@ export default function Navbar() {
                       setSuggestions([]);
                       navigate(`/product/${item.id}`);
                     }}
-                    className="flex items-center justify-between px-4 py-3.5 hover:bg-slate-50 transition-colors cursor-pointer"
+                    className="flex items-center justify-between px-3 py-2.5 hover:bg-slate-50 transition-colors cursor-pointer"
                   >
-                    <div className="flex items-center space-x-3">
+                    <div className="flex items-center space-x-2">
                       {/* Thumbnail with soft gradient background */}
-                      <div className="h-10 w-10 rounded-lg bg-emerald-50 border border-slate-100 flex items-center justify-center relative overflow-hidden select-none">
-                        <span className="text-lg">
+                      <div className="h-8 w-8 rounded-lg bg-emerald-50 border border-slate-100 flex items-center justify-center relative overflow-hidden select-none text-xs">
+                        <span>
                           {item.category === 'Vegetables' ? '🥦' : item.category === 'Grains' ? '🌾' : item.category === 'Fruits' ? '🍎' : '🥔'}
                         </span>
                         {item.image_url && (
@@ -182,14 +178,11 @@ export default function Navbar() {
                         )}
                       </div>
                       <div className="text-left">
-                        <h4 className="text-xs font-bold text-slate-900 leading-snug">{item.name}</h4>
-                        <span className="text-[9px] uppercase font-black tracking-wider text-slate-400 bg-slate-100 px-2 py-0.5 rounded-md mt-1 inline-block">
-                          {item.category}
-                        </span>
+                        <h4 className="text-xs font-bold text-slate-900 leading-snug truncate max-w-[120px]">{item.name}</h4>
                       </div>
                     </div>
                     <div className="text-right">
-                      <span className="text-xs font-extrabold text-emerald-600">
+                      <span className="text-[10px] font-extrabold text-emerald-600">
                         {Number(item.price).toLocaleString()} RWF
                       </span>
                     </div>
@@ -199,11 +192,11 @@ export default function Navbar() {
             )}
           </div>
 
-          {/* Accounts & lists, Wishlist, Cart */}
-          <div className="hidden md:flex items-center space-x-6 text-sm">
+          {/* 4. Accounts & lists, Wishlist, Cart */}
+          <div className="flex items-center space-x-4 md:space-x-6 text-sm shrink-0">
             {/* Account Sign In */}
             {isAuthenticated ? (
-              <div className="text-left text-xs">
+              <div className="text-left text-xs hidden sm:block">
                 <p className="text-slate-400">Hello, {user?.name.split(' ')[0]}</p>
                 <div className="flex items-center space-x-1.5 flex-wrap max-w-[170px]">
                   <Link to="/orders" className="font-bold text-emerald-600 hover:underline">
@@ -228,7 +221,7 @@ export default function Navbar() {
                 </div>
               </div>
             ) : (
-              <Link to="/login" className="text-left text-xs hover:text-emerald-600 transition-colors flex flex-col">
+              <Link to="/login" className="text-left text-xs hover:text-emerald-600 transition-colors flex flex-col hidden sm:flex">
                 <span className="text-slate-400">Hello, sign in</span>
                 <span className="font-bold text-slate-800 text-xs">Accounts & List</span>
               </Link>
@@ -242,7 +235,7 @@ export default function Navbar() {
               <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-current fill-none stroke-current stroke-2" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
               </svg>
-              <p className="font-semibold mt-0.5">Wishlist</p>
+              <p className="font-semibold mt-0.5 hidden md:block">Wishlist</p>
               {wishlist.length > 0 && (
                 <span className="absolute -top-1 -right-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-rose-500 text-[8px] font-bold text-white shadow-sm">
                   {wishlist.length}
@@ -251,25 +244,30 @@ export default function Navbar() {
             </div>
 
             {/* Cart Button */}
-            <Link to="/cart" className="relative flex items-center space-x-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 px-4 py-2.5 rounded-xl border border-emerald-100 transition-all duration-300 hover:scale-[1.03] active:scale-[0.97] shadow-sm">
+            <Link to="/cart" className="relative flex items-center space-x-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 px-3.5 py-2.5 rounded-xl border border-emerald-100 transition-all duration-300 hover:scale-[1.03] active:scale-[0.97] shadow-sm">
               <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-emerald-700 fill-none stroke-current stroke-2" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
               </svg>
-              <div className="text-left text-xs leading-tight">
+              <div className="text-left text-xs leading-tight hidden md:block">
                 <p className="text-[9px] text-emerald-600 font-bold">Cart</p>
                 <p className="font-black text-emerald-950">{cartCount} items</p>
               </div>
+              {cartCount > 0 && (
+                <span className="absolute md:hidden -top-1 -right-1 flex h-4.5 w-4.5 items-center justify-center rounded-full bg-emerald-600 text-[8px] font-bold text-white shadow-sm animate-pulse">
+                  {cartCount}
+                </span>
+              )}
             </Link>
           </div>
         </div>
       </header>
 
-      {/* 2. SUBHEADER LINKS */}
-      <nav className="bg-[#EAE5D8] border-b border-[#DFDACA] py-3 px-4 overflow-x-auto">
+      {/* 2. SUBHEADER LINKS (Mobile/Tablet only, hidden on desktop lg:hidden) */}
+      <nav className="bg-[#EAE5D8] border-b border-[#DFDACA] py-3 px-4 overflow-x-auto lg:hidden">
         <div className="mx-auto max-w-7xl flex items-center space-x-6 text-xs sm:text-sm font-semibold text-slate-600 whitespace-nowrap">
           <Link to="/products" className="text-emerald-600 font-bold flex items-center space-x-2 hover:text-emerald-700 transition-colors">
             {/* Hamburger SVG */}
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-4.5 w-4.5 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+            <svg xmlns="http://www.w3.org/2055/svg" className="h-4.5 w-4.5 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
               <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
             </svg>
             <span>All Categories</span>
