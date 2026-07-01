@@ -95,12 +95,18 @@ router.post('/login', async (req, res) => {
         });
 
         // Return otpRequired status
-        res.status(200).json({ 
+        const responseData = { 
             otpRequired: true, 
             email: email, 
-            message: 'Injiza umubare w\'ibanga woherejwe kuri imeli yawe (Please verify OTP sent to your email)',
-            otp: otp // Retaining for easy presentation/dev view helper
-        });
+            message: 'Injiza umubare w\'ibanga woherejwe kuri imeli yawe (Please verify OTP sent to your email)'
+        };
+
+        // Only return the OTP code to frontend in development / mock mode for testing
+        if (!process.env.SMTP_USER || !process.env.SMTP_PASS || process.env.NODE_ENV === 'development') {
+            responseData.otp = otp;
+        }
+
+        res.status(200).json(responseData);
 
     } catch (error) {
         console.error('Kwinjira byanze:', error);
@@ -238,10 +244,16 @@ router.post('/send-otp', async (req, res) => {
             console.error('[BACKGROUND EMAIL ERROR] Failed to send password reset OTP:', err);
         });
 
-        res.status(200).json({ 
-            message: 'OTP yoherejwe kuri imeli yanyu (OTP sent to your email successfully!)',
-            otp: otp 
-        });
+        const responseData = { 
+            message: 'OTP yoherejwe kuri imeli yanyu (OTP sent to your email successfully!)'
+        };
+
+        // Only return the OTP code to frontend in development / mock mode for testing
+        if (!process.env.SMTP_USER || !process.env.SMTP_PASS || process.env.NODE_ENV === 'development') {
+            responseData.otp = otp;
+        }
+
+        res.status(200).json(responseData);
     } catch (error) {
         console.error('Failed to generate OTP:', error);
         res.status(500).json({ error: 'Server error during OTP creation' });
