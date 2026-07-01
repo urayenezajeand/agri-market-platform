@@ -367,6 +367,27 @@ router.put('/password', authenticateToken, async (req, res) => {
         console.error('Failed to update password:', error);
         res.status(500).json({ error: 'Server error during password update' });
     }
+// Test Email Route for Diagnostics
+router.get('/test-email', async (req, res) => {
+    const targetEmail = req.query.email || 'urayenezajeand@gmail.com';
+    try {
+        console.log(`Sending diagnostic test email to ${targetEmail}...`);
+        const result = await sendOtpEmail(targetEmail, 'Diagnostic Tester', '123456');
+        res.status(200).json({ 
+            success: true, 
+            message: `Test email successfully dispatched to ${targetEmail}!`, 
+            details: result 
+        });
+    } catch (error) {
+        console.error('SMTP test email failed:', error);
+        res.status(500).json({ 
+            success: false, 
+            error: error.message, 
+            code: error.code,
+            command: error.command,
+            stack: error.stack 
+        });
+    }
 });
 
 export default router;
