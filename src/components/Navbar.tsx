@@ -15,11 +15,9 @@ export default function Navbar() {
   // Initialize search input state from current query parameter if present
   const [searchInput, setSearchInput] = useState(searchParams.get('search') || '');
 
-  // Wishlist and Location Drawer States
+  // Wishlist Drawer States
   const [wishlist, setWishlist] = useState<any[]>([]);
   const [isWishlistOpen, setIsWishlistOpen] = useState(false);
-  const [isLocationOpen, setIsLocationOpen] = useState(false);
-  const [deliveryLocation, setDeliveryLocation] = useState(localStorage.getItem('delivery_location') || 'Choose location');
 
   // Load wishlist on init and register event listeners
   const loadWishlist = () => {
@@ -116,22 +114,6 @@ export default function Navbar() {
                 Agri<span className="text-emerald-600">Market</span>
               </span>
             </Link>
-
-            {/* Delivery Location badge */}
-            <div 
-              onClick={() => setIsLocationOpen(true)}
-              className="hidden lg:flex items-center space-x-1.5 text-xs text-slate-500 pl-4 border-l border-slate-200 cursor-pointer hover:opacity-85 transition-opacity"
-            >
-              {/* Pin SVG */}
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-rose-500 fill-none stroke-current stroke-2" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                <path strokeLinecap="round" strokeLinejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-              </svg>
-              <div>
-                <p className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">Deliver to</p>
-                <p className="font-bold text-slate-800 leading-tight truncate max-w-[100px]">{deliveryLocation}</p>
-              </div>
-            </div>
             
             {/* Mobile Cart Icon */}
             <Link to="/cart" className="relative md:hidden flex items-center p-2 text-slate-700 hover:text-emerald-600 transition-colors">
@@ -226,6 +208,10 @@ export default function Navbar() {
                 <div className="flex items-center space-x-1.5 flex-wrap max-w-[170px]">
                   <Link to="/orders" className="font-bold text-emerald-600 hover:underline">
                     My Orders
+                  </Link>
+                  <span className="text-slate-300">•</span>
+                  <Link to="/settings" className="font-bold text-stone-600 hover:text-emerald-600 hover:underline">
+                    Settings
                   </Link>
                   <span className="text-slate-300">•</span>
                   <button onClick={handleLogout} className="font-bold text-slate-800 hover:text-rose-600 hover:underline text-left cursor-pointer">
@@ -333,74 +319,6 @@ export default function Navbar() {
           </Link>
         </div>
       </nav>
-
-      {/* Location Modal */}
-      {isLocationOpen && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl p-6 w-full max-w-sm border border-slate-100 shadow-xl relative animate-scaleIn">
-            <button 
-              onClick={() => setIsLocationOpen(false)}
-              className="absolute top-4 right-4 text-slate-400 hover:text-slate-650 font-bold text-sm cursor-pointer"
-            >
-              ✕
-            </button>
-            <h3 className="text-sm font-black text-slate-900 mb-4">Choose Delivery Location</h3>
-            
-            <div className="space-y-4">
-              <div>
-                <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5 pl-1">
-                  Province
-                </label>
-                <select 
-                  defaultValue="Kigali"
-                  className="block w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-slate-850 focus:outline-none focus:border-emerald-500 text-xs font-semibold shadow-sm"
-                >
-                  <option value="Kigali">Kigali City</option>
-                  <option value="Northern">Northern Province</option>
-                  <option value="Southern">Southern Province</option>
-                  <option value="Eastern">Eastern Province</option>
-                  <option value="Western">Western Province</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5 pl-1">
-                  District
-                </label>
-                <select 
-                  id="district-select"
-                  className="block w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-slate-850 focus:outline-none focus:border-emerald-500 text-xs font-semibold shadow-sm"
-                >
-                  <option value="Nyarugenge">Nyarugenge District</option>
-                  <option value="Gasabo">Gasabo District</option>
-                  <option value="Kicukiro">Kicukiro District</option>
-                  <option value="Musanze">Musanze District</option>
-                  <option value="Gicumbi">Gicumbi District</option>
-                  <option value="Nyagatare">Nyagatare District</option>
-                  <option value="Huye">Huye District</option>
-                  <option value="Rubavu">Rubavu District</option>
-                </select>
-              </div>
-
-              <button 
-                onClick={() => {
-                  const districtSelect = document.getElementById('district-select') as HTMLSelectElement;
-                  const selectedDistrict = districtSelect?.value || 'Kigali';
-                  setDeliveryLocation(selectedDistrict);
-                  localStorage.setItem('delivery_location', selectedDistrict);
-                  // Dispatch address update event so checkout form updates live if open
-                  window.dispatchEvent(new Event('location-changed'));
-                  showToast(`Delivery region set to ${selectedDistrict}!`, 'success');
-                  setIsLocationOpen(false);
-                }}
-                className="w-full bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl py-2.5 text-xs font-bold transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] shadow-md cursor-pointer mt-2"
-              >
-                Confirm Location
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Wishlist Drawer */}
       {isWishlistOpen && (

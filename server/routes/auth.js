@@ -3,6 +3,7 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import pool from '../db.js';
 import { sendOtpEmail } from '../mailer.js';
+import { authenticateToken } from '../middleware/auth.js';
 
 const router = express.Router();
 
@@ -221,6 +222,78 @@ router.post('/verify-otp', async (req, res) => {
         res.status(200).json({ message: 'Ijambo ry\'ibanga ryahinduwe neza! (Password reset successful!)' });
     } catch (error) {
         console.error('Failed to reset password via OTP:', error);
+        res.status(500).json({ error: 'Server error during password update' });
+    }
+});
+
+// Update User Profile (Name & Email)
+router.put('/profile', authenticateToken, async (req, res) => {
+    const { name, email } = req.body;
+    const userId = req.user.id;
+
+    try {
+        if (!name || !email) {
+            return res.status(400).json({ error: 'Name and email are required.' });
+        }
+
+        // Check if email already taken by another user
+        const emailCheck = await pool.query('SELECT * FROM users WHERE email = $1 AND id != $2', [email, userId]);
+        if (emailCheck.rows.length > 0) {
+            return res.status(400).json({ error: 'Imeli mukoresheje yarakoreshejwe (Email already in use)' });
+        }
+
+        // Update user profile in database
+        const updated = await pool.query(
+            'UPDATE users SET name = $1, email = $2 WHERE id = $3 RETURNING id, name, email, role, created_at',
+            [name, email, userId]
+        );
+
+        res.status(200).json({ user: updated.rows[0] });
+    } catch (error) {
+        console.error('Failed to update user profile:', error);
+        res.status(500).json({ error: 'Server error during profile update' });
+    }
+});
+
+// Update User Password
+router.put('/password', authenticateToken, async (req, res) => {
+    const { currentPassword, newPassword } = req.body;
+    const userId = req.user.id;
+
+    try {
+        if (!newPassword) {
+            return res.status(400).json({ error: 'New password is required.' });
+        }
+
+        // Get user password hash
+        const userQuery = await pool.query('SELECT * FROM users WHERE id = $1', [userId]);
+        if (userQuery.rows.length === 0) {
+            return res.status(404).json({ error: 'User not found.' });
+        }
+
+        const user = userQuery.rows[0];
+
+        // Google OAuth users who never had a password won't have a known current password.
+        const isGoogleUser = user.password_hash.startsWith('$2a$10$') === false || user.email.includes('gmail.com'); 
+        
+        if (currentPassword) {
+            const valid = await bcrypt.compare(currentPassword, user.password_hash);
+            if (!valid) {
+                return res.status(400).json({ error: 'Ijambo ry\'ibanga rya kera si ryo (Incorrect current password)' });
+            }
+        } else if (!isGoogleUser) {
+            return res.status(400).json({ error: 'Ugomba kwerekana ijambo ry\'ibanga rya kera (Current password is required)' });
+        }
+
+        // Hash and update new password
+        const salt = await bcrypt.genSalt(10);
+        const passwordHash = await bcrypt.hash(newPassword, salt);
+
+        await pool.query('UPDATE users SET password_hash = $1 WHERE id = $2', [passwordHash, userId]);
+
+        res.status(200).json({ message: 'Ijambo ry\'ibanga ryahinduwe neza! (Password updated successfully)' });
+    } catch (error) {
+        console.error('Failed to update password:', error);
         res.status(500).json({ error: 'Server error during password update' });
     }
 });
