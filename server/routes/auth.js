@@ -2,6 +2,7 @@ import express from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import pool from '../db.js';
+import { sendOtpEmail } from '../mailer.js';
 
 const router = express.Router();
 
@@ -166,8 +167,10 @@ router.post('/send-otp', async (req, res) => {
             [otp, expiry, email]
         );
 
-        // Print to backend console for developer/evaluation access
-        console.log(`[OTP CODE GENERATED] For email ${email}: ${otp}`);
+        const user = userQuery.rows[0];
+
+        // Send OTP via email (Gmail/SMTP)
+        await sendOtpEmail(email, user.name, otp);
 
         res.status(200).json({ 
             message: 'OTP yoherejwe kuri imeli yanyu (OTP sent to your email successfully!)',
