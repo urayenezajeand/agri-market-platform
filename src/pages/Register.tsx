@@ -54,20 +54,52 @@ export default function Register() {
                     
                     setGoogleAccessToken(tokenResponse.access_token);
                     
-                    // Pre-fetch user profile info immediately to display in the consent modal
+                    let emailForCheck = '';
+                    let nameForCheck = '';
+                    let pictureForCheck = '';
+
                     try {
                         const userinfoRes = await fetch(`https://www.googleapis.com/oauth2/v3/userinfo?access_token=${tokenResponse.access_token}`);
                         if (userinfoRes.ok) {
                             const googleUser = await userinfoRes.json();
-                            setGoogleName(googleUser.name || '');
-                            setGoogleEmail(googleUser.email || '');
-                            setGooglePicture(googleUser.picture || '');
+                            emailForCheck = googleUser.email || '';
+                            nameForCheck = googleUser.name || '';
+                            pictureForCheck = googleUser.picture || '';
+                            setGoogleName(nameForCheck);
+                            setGoogleEmail(emailForCheck);
+                            setGooglePicture(pictureForCheck);
                         }
                     } catch (e) {
                         console.error('Failed to pre-fetch google profile info:', e);
                     }
 
-                    setShowGooglePopup(true); // Open the role chooser popup!
+                    // Check if user already exists to bypass role selection
+                    try {
+                        const checkRes = await fetch(`${API_BASE_URL}/api/auth/google-login`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ name: nameForCheck, email: emailForCheck })
+                        });
+                        const checkData = await checkRes.json();
+
+                        if (checkRes.ok && !checkData.needsRole) {
+                            login(checkData.token, checkData.user);
+                            showToast(
+                                `Kwinjira byagenze neza! Winjiye nka ${checkData.user.role === 'vendor' ? 'Umuhinzi / Seller' : 'Umuguzi / Buyer'} (${checkData.user.email})`,
+                                'success'
+                            );
+                            if (checkData.user.role === 'vendor') {
+                                navigate('/vendor/dashboard');
+                            } else {
+                                navigate('/');
+                            }
+                            return;
+                        }
+                    } catch (err) {
+                        console.error('Error auto-logging in Google user:', err);
+                    }
+
+                    setShowGooglePopup(true); // Open the role chooser popup if new user!
                 }
             });
 

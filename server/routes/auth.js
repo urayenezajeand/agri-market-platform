@@ -103,26 +103,32 @@ router.post('/google-login', async (req, res) => {
     const { name, email, role } = req.body;
 
     try {
-        const validRoles = ['buyer', 'vendor'];
-        const useRole = validRoles.includes(role) ? role : 'buyer';
-
         // Check if user already exists
         let userQuery = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
         let user;
 
         if (userQuery.rows.length === 0) {
-            // Create user with a mock password hash
-            const mockPassword = Math.random().toString(36).substring(7);
-            const salt = await bcrypt.genSalt(10);
-            const passwordHash = await bcrypt.hash(mockPassword, salt);
+            // User does not exist. If role is provided, create the account.
+            if (role) {
+                const validRoles = ['buyer', 'vendor'];
+                const useRole = validRoles.includes(role) ? role : 'buyer';
 
-            const newUser = await pool.query(
-                'INSERT INTO users (name, email, password_hash, role) VALUES ($1, $2, $3, $4) RETURNING id, name, email, role, created_at',
-                [name, email, passwordHash, useRole]
-            );
-            user = newUser.rows[0];
-            console.log(`Google user registered: ${email}`);
+                const mockPassword = Math.random().toString(36).substring(7);
+                const salt = await bcrypt.genSalt(10);
+                const passwordHash = await bcrypt.hash(mockPassword, salt);
+
+                const newUser = await pool.query(
+                    'INSERT INTO users (name, email, password_hash, role) VALUES ($1, $2, $3, $4) RETURNING id, name, email, role, created_at',
+                    [name, email, passwordHash, useRole]
+                );
+                user = newUser.rows[0];
+                console.log(`Google user registered: ${email}`);
+            } else {
+                // No role provided, tell frontend that role choice is required
+                return res.status(200).json({ needsRole: true });
+            }
         } else {
+            // User already exists, log in directly using stored role
             user = userQuery.rows[0];
             console.log(`Google user logged in: ${email}`);
         }
@@ -134,7 +140,7 @@ router.post('/google-login', async (req, res) => {
             { expiresIn: '24h' }
         );
 
-        res.status(200).json({ token, user });
+        res.status(200).json({ token, user, needsRole: false });
     } catch (error) {
         console.error('Google login failed:', error);
         res.status(500).json({ error: 'Server error during Google auth' });
