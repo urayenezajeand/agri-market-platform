@@ -187,7 +187,11 @@ export default function Login() {
       }
     } catch (err: any) {
       console.error(err);
-      setError(err.message || 'Kwinjira byanze: Reba imeli n\'ijambo ry\'ibanga.');
+      if (err.message === 'Failed to fetch' || err.name === 'TypeError') {
+        setError('Ikirogoya cy\'umuyoboro. Nyamuneka ongera ugerageze (Network connection error. Please check your internet and try again).');
+      } else {
+        setError(err.message || 'Kwinjira byanze: Reba imeli n\'ijambo ry\'ibanga.');
+      }
     } finally {
       setLoading(false);
     }
@@ -226,7 +230,11 @@ export default function Login() {
       }
     } catch (err: any) {
       console.error(err);
-      setError(err.message || 'OTP code is invalid or expired.');
+      if (err.message === 'Failed to fetch' || err.name === 'TypeError') {
+        setError('Ikirogoya cy\'umuyoboro. Nyamuneka ongera ugerageze (Network connection error. Please check your internet and try again).');
+      } else {
+        setError(err.message || 'OTP code is invalid or expired.');
+      }
     } finally {
       setLoading(false);
     }
