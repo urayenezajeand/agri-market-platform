@@ -8,6 +8,7 @@ const transporter = nodemailer.createTransport({
     host: process.env.SMTP_HOST || 'smtp.gmail.com',
     port: parseInt(process.env.SMTP_PORT || '587'),
     secure: process.env.SMTP_SECURE === 'true', // true for 465, false for other ports
+    family: 4, // Force IPv4 to resolve ENETUNREACH issues on cloud hosts like Render
     auth: {
         user: process.env.SMTP_USER, // Your Gmail address
         pass: process.env.SMTP_PASS  // Your Gmail App Password
