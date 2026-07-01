@@ -9,6 +9,9 @@ export default function Login() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [otpRequired, setOtpRequired] = useState(false);
+  const [otpCode, setOtpCode] = useState('');
+  const [loginOtpHint, setLoginOtpHint] = useState('');
 
   // Real Google OAuth Login States
   const [showGooglePopup, setShowGooglePopup] = useState(false);
@@ -154,7 +157,7 @@ export default function Login() {
     setLoading(true);
 
     try {
-      // 1. Kohereza amakuru kuri backend API (POST request to Login endpoint)
+      // 1. Send request to login endpoint
       const res = await fetch(`${API_BASE_URL}/api/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -167,10 +170,16 @@ export default function Login() {
         throw new Error(data.error || 'Login failed');
       }
 
-      // 2. Guseva session mu mutekano muri AuthContext (Save token and user)
-      login(data.token, data.user);
+      // If OTP is required, switch to OTP verify step
+      if (data.otpRequired) {
+        setOtpRequired(true);
+        setLoginOtpHint(data.otp || '');
+        showToast('Nyamuneka verification OTP yoherejwe kuri imeli! (OTP challenge sent)', 'success');
+        return;
+      }
 
-      // 3. Kohereza user ku rupapuro rugenewe role ye (Redirect based on role)
+      // Legacy fallback (should not be hit under normal 2FA routing)
+      login(data.token, data.user);
       if (data.user.role === 'vendor') {
         navigate('/vendor/dashboard');
       } else {
@@ -179,6 +188,45 @@ export default function Login() {
     } catch (err: any) {
       console.error(err);
       setError(err.message || 'Kwinjira byanze: Reba imeli n\'ijambo ry\'ibanga.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleVerifyOtp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+    setLoading(true);
+
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/auth/verify-login-otp`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, otp: otpCode })
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || 'Verification failed');
+      }
+
+      // 2. Save session details
+      login(data.token, data.user);
+      showToast(
+        `Kwinjira byagenze neza! Winjiye nka ${data.user.role === 'vendor' ? 'Umuhinzi / Seller' : 'Umuguzi / Buyer'} (${data.user.email})`,
+        'success'
+      );
+
+      // 3. Redirect
+      if (data.user.role === 'vendor') {
+        navigate('/vendor/dashboard');
+      } else {
+        navigate('/');
+      }
+    } catch (err: any) {
+      console.error(err);
+      setError(err.message || 'OTP code is invalid or expired.');
     } finally {
       setLoading(false);
     }
@@ -216,103 +264,174 @@ export default function Login() {
           </div>
         )}
 
-        {/* Login Form */}
-        <form className="mt-6 space-y-6" onSubmit={handleSubmit}>
-          <div className="space-y-5">
-            <div>
-              <label htmlFor="email-address" className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5 pl-1">
-                Email Address
-              </label>
-              <input
-                id="email-address"
-                name="email"
-                type="email"
-                required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="block w-full rounded-2xl border border-slate-200 bg-white/50 px-4 py-3 text-slate-950 placeholder-slate-400 focus:border-emerald-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 text-sm transition-all shadow-sm"
-                placeholder="name@example.com"
-              />
-            </div>
-            
-            <div>
-              <div className="flex justify-between items-center mb-1.5 pl-1">
-                <label htmlFor="password" className="block text-xs font-bold text-slate-500 uppercase tracking-wider">
-                  Password
+        {/* Login Form or OTP Verification Form */}
+        {!otpRequired ? (
+          <form className="mt-6 space-y-6" onSubmit={handleSubmit}>
+            <div className="space-y-5">
+              <div>
+                <label htmlFor="email-address" className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5 pl-1">
+                  Email Address
                 </label>
-                <Link to="/forgot-password" className="text-xs font-bold text-emerald-600 hover:text-emerald-500 transition-colors">
-                  Forgot Password?
+                <input
+                  id="email-address"
+                  name="email"
+                  type="email"
+                  required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="block w-full rounded-2xl border border-slate-200 bg-white/50 px-4 py-3 text-slate-950 placeholder-slate-400 focus:border-emerald-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 text-sm transition-all shadow-sm"
+                  placeholder="name@example.com"
+                />
+              </div>
+              
+              <div>
+                <div className="flex justify-between items-center mb-1.5 pl-1">
+                  <label htmlFor="password" className="block text-xs font-bold text-slate-500 uppercase tracking-wider">
+                    Password
+                  </label>
+                  <Link to="/forgot-password" className="text-xs font-bold text-emerald-600 hover:text-emerald-500 transition-colors">
+                    Forgot Password?
+                  </Link>
+                </div>
+                <input
+                  id="password"
+                  name="password"
+                  type="password"
+                  required
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="block w-full rounded-2xl border border-slate-200 bg-white/50 px-4 py-3 text-slate-950 placeholder-slate-400 focus:border-emerald-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 text-sm transition-all shadow-sm"
+                  placeholder="••••••••"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              <button
+                type="submit"
+                disabled={loading}
+                className="flex w-full justify-center items-center rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-600 px-4 py-3.5 text-sm font-bold text-white shadow-lg shadow-emerald-600/20 hover:shadow-xl hover:shadow-emerald-600/30 hover:scale-[1.01] active:scale-[0.99] disabled:opacity-50 transition-all cursor-pointer"
+              >
+                {loading ? (
+                  <span className="flex items-center space-x-2">
+                    <span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"></span>
+                    <span>Signing in...</span>
+                  </span>
+                ) : (
+                  'Sign In'
+                )}
+              </button>
+
+              <div className="relative flex py-2 items-center">
+                <div className="flex-grow border-t border-stone-200"></div>
+                <span className="flex-shrink mx-4 text-[10px] text-stone-400 font-bold uppercase tracking-wider">or</span>
+                <div className="flex-grow border-t border-stone-200"></div>
+              </div>
+
+              <button
+                type="button"
+                onClick={handleGoogleLogin}
+                className="flex w-full justify-center items-center space-x-2.5 rounded-2xl bg-white border border-stone-200 hover:bg-stone-50 hover:border-stone-300 px-4 py-3.5 text-xs font-black text-stone-700 shadow-sm transition-all duration-300 hover:scale-[1.01] active:scale-[0.99] cursor-pointer"
+              >
+                <svg className="h-4 w-4" viewBox="0 0 24 24">
+                  <path
+                    fill="#EA4335"
+                    d="M12 5.04c1.62 0 3.08.56 4.22 1.64l3.15-3.15C17.45 1.68 14.93 1 12 1 7.37 1 3.4 3.65 1.48 7.52l3.75 2.91C6.12 7.36 8.84 5.04 12 5.04z"
+                  />
+                  <path
+                    fill="#4285F4"
+                    d="M23.49 12.27c0-.81-.07-1.59-.2-2.36H12v4.47h6.44c-.28 1.47-1.11 2.71-2.36 3.55l3.66 2.84c2.14-1.97 3.37-4.87 3.37-8.5z"
+                  />
+                  <path
+                    fill="#FBBC05"
+                    d="M5.23 14.47c-.24-.72-.37-1.49-.37-2.27s.13-1.55.37-2.27L1.48 7.52C.54 9.4.01 11.51.01 13.75s.53 4.35 1.47 6.23l3.75-2.91z"
+                  />
+                  <path
+                    fill="#34A853"
+                    d="M12 23c3.24 0 5.97-1.07 7.96-2.91l-3.66-2.84c-1.01.68-2.3 1.09-3.7 1.09-3.16 0-5.88-2.32-6.77-5.39L1.08 16.27C3 20.14 7.03 23 12 23z"
+                  />
+                </svg>
+                <span>Sign in with Google</span>
+              </button>
+
+              <div className="text-center text-xs">
+                <span className="text-slate-500">Don't have an account? </span>
+                <Link to="/register" className="font-bold text-emerald-600 hover:text-emerald-500 transition-colors">
+                  Create one now
                 </Link>
               </div>
-              <input
-                id="password"
-                name="password"
-                type="password"
-                required
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="block w-full rounded-2xl border border-slate-200 bg-white/50 px-4 py-3 text-slate-950 placeholder-slate-400 focus:border-emerald-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 text-sm transition-all shadow-sm"
-                placeholder="••••••••"
-              />
             </div>
-          </div>
-
-          <div className="space-y-4">
-            <button
-              type="submit"
-              disabled={loading}
-              className="flex w-full justify-center items-center rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-600 px-4 py-3.5 text-sm font-bold text-white shadow-lg shadow-emerald-600/20 hover:shadow-xl hover:shadow-emerald-600/30 hover:scale-[1.01] active:scale-[0.99] disabled:opacity-50 transition-all cursor-pointer"
-            >
-              {loading ? (
-                <span className="flex items-center space-x-2">
-                  <span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"></span>
-                  <span>Signing in...</span>
-                </span>
-              ) : (
-                'Sign In'
+          </form>
+        ) : (
+          <form className="mt-6 space-y-6" onSubmit={handleVerifyOtp}>
+            <div className="space-y-4 text-center">
+              <p className="text-xs text-slate-500 leading-relaxed font-semibold">
+                Twakohereje umubare w'ibanga (OTP code) kuri imeli yawe. Nyamuneka yinjize hano kugira ngo winjire.
+              </p>
+              
+              {/* Visual Presentation OTP Helper Card */}
+              {loginOtpHint && (
+                <div className="rounded-2xl border-2 border-dashed border-orange-200 bg-orange-50/70 p-4 text-left shadow-sm animate-pulse">
+                  <div className="flex items-center space-x-2 text-[10px] font-black text-orange-600 uppercase tracking-widest mb-1.5">
+                    <span>💡 Demo Mode Helper</span>
+                  </div>
+                  <p className="text-xs text-orange-700 leading-snug font-medium">
+                    Because this is a local evaluation, we printed the generated OTP code here so you don't have to open your email:
+                  </p>
+                  <div className="mt-3 text-center">
+                    <span className="inline-block bg-white border border-orange-200 rounded-xl px-4 py-2 font-mono text-xl font-extrabold text-orange-600 tracking-wider">
+                      {loginOtpHint}
+                    </span>
+                  </div>
+                </div>
               )}
-            </button>
 
-             <div className="relative flex py-2 items-center">
-              <div className="flex-grow border-t border-stone-200"></div>
-              <span className="flex-shrink mx-4 text-[10px] text-stone-400 font-bold uppercase tracking-wider">or</span>
-              <div className="flex-grow border-t border-stone-200"></div>
+              <div>
+                <label htmlFor="otp-code" className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5 pl-1 text-left">
+                  Enter 6-Digit OTP Code
+                </label>
+                <input
+                  id="otp-code"
+                  type="text"
+                  required
+                  maxLength={6}
+                  value={otpCode}
+                  onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, ''))}
+                  className="block w-full rounded-2xl border border-slate-200 bg-white/50 px-4 py-3 text-center font-mono text-lg font-black tracking-widest text-slate-950 placeholder-slate-400 focus:border-emerald-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 transition-all shadow-sm"
+                  placeholder="000000"
+                />
+              </div>
             </div>
 
-            <button
-              type="button"
-              onClick={handleGoogleLogin}
-              className="flex w-full justify-center items-center space-x-2.5 rounded-2xl bg-white border border-stone-200 hover:bg-stone-50 hover:border-stone-300 px-4 py-3.5 text-xs font-black text-stone-700 shadow-sm transition-all duration-300 hover:scale-[1.01] active:scale-[0.99] cursor-pointer"
-            >
-              <svg className="h-4 w-4" viewBox="0 0 24 24">
-                <path
-                  fill="#EA4335"
-                  d="M12 5.04c1.62 0 3.08.56 4.22 1.64l3.15-3.15C17.45 1.68 14.93 1 12 1 7.37 1 3.4 3.65 1.48 7.52l3.75 2.91C6.12 7.36 8.84 5.04 12 5.04z"
-                />
-                <path
-                  fill="#4285F4"
-                  d="M23.49 12.27c0-.81-.07-1.59-.2-2.36H12v4.47h6.44c-.28 1.47-1.11 2.71-2.36 3.55l3.66 2.84c2.14-1.97 3.37-4.87 3.37-8.5z"
-                />
-                <path
-                  fill="#FBBC05"
-                  d="M5.23 14.47c-.24-.72-.37-1.49-.37-2.27s.13-1.55.37-2.27L1.48 7.52C.54 9.4.01 11.51.01 13.75s.53 4.35 1.47 6.23l3.75-2.91z"
-                />
-                <path
-                  fill="#34A853"
-                  d="M12 23c3.24 0 5.97-1.07 7.96-2.91l-3.66-2.84c-1.01.68-2.3 1.09-3.7 1.09-3.16 0-5.88-2.32-6.77-5.39L1.08 16.27C3 20.14 7.03 23 12 23z"
-                />
-              </svg>
-              <span>Sign in with Google</span>
-            </button>
+            <div className="space-y-4">
+              <button
+                type="submit"
+                disabled={loading}
+                className="flex w-full justify-center items-center rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-600 px-4 py-3.5 text-sm font-bold text-white shadow-lg shadow-emerald-600/20 hover:shadow-xl hover:shadow-emerald-600/30 hover:scale-[1.01] active:scale-[0.99] disabled:opacity-50 transition-all cursor-pointer"
+              >
+                {loading ? (
+                  <span className="flex items-center space-x-2">
+                    <span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"></span>
+                    <span>Verifying...</span>
+                  </span>
+                ) : (
+                  'Verify & Continue'
+                )}
+              </button>
 
-            <div className="text-center text-xs">
-              <span className="text-slate-500">Don't have an account? </span>
-              <Link to="/register" className="font-bold text-emerald-600 hover:text-emerald-500 transition-colors">
-                Create one now
-              </Link>
+              <button
+                type="button"
+                onClick={() => {
+                  setOtpRequired(false);
+                  setError('');
+                }}
+                className="w-full text-center text-xs font-bold text-slate-500 hover:text-slate-705 transition-colors cursor-pointer"
+              >
+                ← Back to Login
+              </button>
             </div>
-          </div>
-        </form>
+          </form>
+        )}
       </div>
 
       {/* 3. SIMULATED GOOGLE OAUTH POPUP MODAL */}

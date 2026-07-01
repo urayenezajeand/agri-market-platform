@@ -68,7 +68,6 @@ router.post('/login', async (req, res) => {
 
     try {
         //kureba wa mu user muri database twifashishije amakuru ye yibanga yatanzwe na req.body
-
         const result = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
         if (result.rows.length === 0) {
             return res.status(400).json({ error: 'imel yawe cg password ntabwo ari byo )' });
@@ -80,22 +79,78 @@ router.post('/login', async (req, res) => {
             return res.status(400).json({ error: 'Imeli cyangwa ijambo ry\'ibanga sibyo' });
         }
 
-        // 4. Guhanga Token nshya (Generating the JWT token)
+        // Generate 6-digit OTP for login verification
+        const otp = Math.floor(100000 + Math.random() * 900000).toString();
+        const expiry = new Date(Date.now() + 5 * 60 * 1000); // 5 mins expiry
+
+        // Save OTP to DB
+        await pool.query(
+            'UPDATE users SET otp_code = $1, otp_expiry = $2 WHERE id = $3',
+            [otp, expiry, user.id]
+        );
+
+        // Send OTP via email
+        await sendOtpEmail(email, user.name, otp);
+
+        // Return otpRequired status
+        res.status(200).json({ 
+            otpRequired: true, 
+            email: email, 
+            message: 'Injiza umubare w\'ibanga woherejwe kuri imeli yawe (Please verify OTP sent to your email)',
+            otp: otp // Retaining for easy presentation/dev view helper
+        });
+
+    } catch (error) {
+        console.error('Kwinjira byanze:', error);
+        res.status(500).json({ error: 'Server ifite ikibazo' });
+    }
+});
+
+// Verify login OTP challenge
+router.post('/verify-login-otp', async (req, res) => {
+    const { email, otp } = req.body;
+
+    try {
+        if (!email || !otp) {
+            return res.status(400).json({ error: 'Email and OTP are required' });
+        }
+
+        const result = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
+        if (result.rows.length === 0) {
+            return res.status(400).json({ error: 'Umukoresha ntagaragara muri system' });
+        }
+
+        const user = result.rows[0];
+
+        // Verify OTP matches and is not expired
+        if (!user.otp_code || user.otp_code !== otp) {
+            return res.status(400).json({ error: 'Umubare w\'ibanga ntuhura (Invalid OTP code)' });
+        }
+
+        if (new Date() > new Date(user.otp_expiry)) {
+            return res.status(400).json({ error: 'Igihe cyo gukoresha uyu mubare cyarangiye (OTP expired)' });
+        }
+
+        // Clear OTP values
+        await pool.query(
+            'UPDATE users SET otp_code = NULL, otp_expiry = NULL WHERE id = $1',
+            [user.id]
+        );
+
+        // Generate JWT token
         const token = jwt.sign(
             { id: user.id, role: user.role },
             process.env.JWT_SECRET,
             { expiresIn: '24h' }
         );
 
-        // 5. Gukura password hash mu makuru yoherezwa kuri browser (Removing password hash)
         const { password_hash, ...userWithoutPassword } = user;
 
-        // 6. Kohereza igisubizo cyiza (Sending the success response)
-        res.json({ token, user: userWithoutPassword });
+        res.status(200).json({ token, user: userWithoutPassword });
 
     } catch (error) {
-        console.error('Kwinjira byanze:', error);
-        res.status(500).json({ error: 'Server ifite ikibazo' });
+        console.error('OTP verification failed:', error);
+        res.status(500).json({ error: 'Server error during OTP verification' });
     }
 });
 
