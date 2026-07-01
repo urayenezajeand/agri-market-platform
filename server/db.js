@@ -12,7 +12,10 @@ const isProduction = process.env.NODE_ENV === 'production';
 // Check if a single connection URL is provided, otherwise use individual parameters
 const pool = new Pool(
     process.env.DATABASE_URL
-        ? { connectionString: process.env.DATABASE_URL }
+        ? { 
+            connectionString: process.env.DATABASE_URL,
+            ssl: isProduction ? { rejectUnauthorized: false } : false
+          }
         : {
             user: process.env.DB_USER,
             host: process.env.DB_HOST,
