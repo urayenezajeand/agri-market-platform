@@ -46,10 +46,24 @@ export default function Checkout() {
       return setError('Ugomba kubanza kwinjira mu konti yawe (Please sign in to place an order)');
     }
 
-    // 2. Validate phone number format
-    if (!phone.startsWith('+250') || phone.length !== 13) {
-      return setError('Numero ya telefone igomba gutangira na +250 ikagira imibare 13 (+2507xxxxxxx)');
+    // 2. Normalize and validate phone number format
+    let cleanedPhone = phone.trim().replace(/[\s-]/g, '');
+    
+    // Auto-prepend +250 for common Rwandan mobile format entries
+    if (cleanedPhone.startsWith('07') && cleanedPhone.length === 10) {
+      cleanedPhone = '+250' + cleanedPhone.substring(1);
+    } else if (cleanedPhone.startsWith('7') && cleanedPhone.length === 9) {
+      cleanedPhone = '+250' + cleanedPhone;
+    } else if (cleanedPhone.startsWith('2507') && cleanedPhone.length === 12) {
+      cleanedPhone = '+' + cleanedPhone;
     }
+
+    if (!cleanedPhone.startsWith('+250') || cleanedPhone.length !== 13) {
+      return setError('Numero ya telefone igomba gutangira na +250 cg 07 ikagira imibare 10 cg 13.');
+    }
+
+    // Save normalized phone back to state and use it
+    setPhone(cleanedPhone);
 
     setLoading(true);
 
@@ -67,7 +81,7 @@ export default function Checkout() {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify({ address, phone, items })
+        body: JSON.stringify({ address, phone: cleanedPhone, items })
       });
 
       const data = await res.json();
