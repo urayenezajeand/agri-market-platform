@@ -10,10 +10,17 @@ export default function Login() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  // Google Login Mock States
+  // Real Google OAuth Login States
   const [showGooglePopup, setShowGooglePopup] = useState(false);
   const [googleRole, setGoogleRole] = useState<'buyer' | 'vendor'>('buyer');
   const [googleLoading, setGoogleLoading] = useState(false);
+  const [googleAccessToken, setGoogleAccessToken] = useState('');
+  
+  // Real Google User Profile Details
+  const [googleName, setGoogleName] = useState('');
+  const [googleEmail, setGoogleEmail] = useState('');
+  const [googlePicture, setGooglePicture] = useState('');
+  
   const [searchParams] = useSearchParams();
 
   const { login } = useAuth();
@@ -22,39 +29,91 @@ export default function Login() {
 
   React.useEffect(() => {
     if (searchParams.get('action') === 'google') {
-      setShowGooglePopup(true);
+      showToast('Banza ukande kuri "Sign in with Google" uhitemo konti yawe.', 'info');
     }
   }, [searchParams]);
 
   const handleGoogleLogin = () => {
-    setShowGooglePopup(true);
+    if (!(window as any).google) {
+      showToast('Google login SDK loading error. Please reload the page.', 'error');
+      return;
+    }
+
+    try {
+      const client = (window as any).google.accounts.oauth2.initTokenClient({
+        client_id: '714098016603-vmaj4k1gv1cjq1pnrtul4mbkk2b0icst.apps.googleusercontent.com',
+        scope: 'email profile openid',
+        callback: async (tokenResponse: any) => {
+          if (tokenResponse.error) {
+            console.error(tokenResponse.error);
+            showToast('Google Sign-In was cancelled or failed.', 'warning');
+            return;
+          }
+          
+          setGoogleAccessToken(tokenResponse.access_token);
+          
+          // Pre-fetch user profile info immediately to display in the consent modal
+          try {
+            const userinfoRes = await fetch(`https://www.googleapis.com/oauth2/v3/userinfo?access_token=${tokenResponse.access_token}`);
+            if (userinfoRes.ok) {
+              const googleUser = await userinfoRes.json();
+              setGoogleName(googleUser.name || '');
+              setGoogleEmail(googleUser.email || '');
+              setGooglePicture(googleUser.picture || '');
+            }
+          } catch (e) {
+            console.error('Failed to pre-fetch google profile info:', e);
+          }
+
+          setShowGooglePopup(true); // Open the role chooser popup!
+        }
+      });
+
+      client.requestAccessToken();
+    } catch (err) {
+      console.error(err);
+      showToast('Failed to initialize Google Login popup.', 'error');
+    }
   };
 
-  const confirmGoogleLogin = () => {
+  const confirmGoogleLogin = async () => {
+    if (!googleAccessToken || !googleEmail) return;
     setGoogleLoading(true);
-    setTimeout(() => {
-      const mockToken = 'mock-google-oauth2-jwt-token-urayeneza-' + Math.random().toString(36).substring(7);
-      const mockUser = {
-        id: 7777,
-        name: 'Jean Urayeneza',
-        email: 'urayenezajeand@gmail.com',
-        role: googleRole as 'buyer' | 'vendor' | 'admin'
-      };
 
-      login(mockToken, mockUser);
+    try {
+      // 2. Authenticate or Register in PostgreSQL backend
+      const res = await fetch(`${API_BASE_URL}/api/auth/google-login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: googleName, email: googleEmail, role: googleRole })
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || 'Backend failed to save Google credentials.');
+      }
+
+      // 3. Complete authentication session
+      login(data.token, data.user);
       setGoogleLoading(false);
       setShowGooglePopup(false);
       showToast(
-        `Kwinjira na Google byagenze neza! Mwajemo nka ${googleRole === 'vendor' ? 'Umuhinzi / Seller' : 'Umuguzi / Buyer'}`,
+        `Kwinjira byagenze neza! Winjiye nka ${data.user.role === 'vendor' ? 'Umuhinzi / Seller' : 'Umuguzi / Buyer'} (${data.user.email})`,
         'success'
       );
 
-      if (googleRole === 'vendor') {
+      if (data.user.role === 'vendor') {
         navigate('/vendor/dashboard');
       } else {
         navigate('/');
       }
-    }, 1200); // 1.2 second simulated OAuth redirect handshake
+    } catch (err: any) {
+      console.error(err);
+      showToast(err.message || 'Google verification failed.', 'error');
+      setGoogleLoading(false);
+      setShowGooglePopup(false);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -256,12 +315,16 @@ export default function Login() {
             <div className="my-6 border border-stone-200 rounded-2xl p-4 bg-stone-50/50 space-y-4">
               {/* Account list card */}
               <div className="flex items-center space-x-3 pb-3 border-b border-stone-200">
-                <div className="h-9 w-9 rounded-full bg-emerald-600 text-white flex items-center justify-center font-black text-xs">
-                  JU
-                </div>
+                {googlePicture ? (
+                  <img src={googlePicture} className="h-9 w-9 rounded-full object-cover border border-stone-200" alt="Google Profile" />
+                ) : (
+                  <div className="h-9 w-9 rounded-full bg-emerald-600 text-white flex items-center justify-center font-black text-xs">
+                    {googleName ? googleName.substring(0, 2).toUpperCase() : 'G'}
+                  </div>
+                )}
                 <div className="text-left">
-                  <h4 className="text-xs font-black text-stone-800 leading-none">Jean Urayeneza</h4>
-                  <span className="text-[10px] text-stone-400 font-bold">urayenezajeand@gmail.com</span>
+                  <h4 className="text-xs font-black text-stone-800 leading-none">{googleName || 'Google User'}</h4>
+                  <span className="text-[10px] text-stone-450 font-bold">{googleEmail}</span>
                 </div>
               </div>
 

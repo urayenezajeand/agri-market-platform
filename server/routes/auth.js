@@ -95,9 +95,50 @@ router.post('/login', async (req, res) => {
         console.error('Kwinjira byanze:', error);
         res.status(500).json({ error: 'Server ifite ikibazo' });
     }
+});
 
+// Google OAuth Login / Registration Endpoint
+router.post('/google-login', async (req, res) => {
+    const { name, email, role } = req.body;
 
-})
+    try {
+        const validRoles = ['buyer', 'vendor'];
+        const useRole = validRoles.includes(role) ? role : 'buyer';
+
+        // Check if user already exists
+        let userQuery = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
+        let user;
+
+        if (userQuery.rows.length === 0) {
+            // Create user with a mock password hash
+            const mockPassword = Math.random().toString(36).substring(7);
+            const salt = await bcrypt.genSalt(10);
+            const passwordHash = await bcrypt.hash(mockPassword, salt);
+
+            const newUser = await pool.query(
+                'INSERT INTO users (name, email, password_hash, role) VALUES ($1, $2, $3, $4) RETURNING id, name, email, role, created_at',
+                [name, email, passwordHash, useRole]
+            );
+            user = newUser.rows[0];
+            console.log(`Google user registered: ${email}`);
+        } else {
+            user = userQuery.rows[0];
+            console.log(`Google user logged in: ${email}`);
+        }
+
+        // Generate JWT token
+        const token = jwt.sign(
+            { id: user.id, role: user.role },
+            process.env.JWT_SECRET,
+            { expiresIn: '24h' }
+        );
+
+        res.status(200).json({ token, user });
+    } catch (error) {
+        console.error('Google login failed:', error);
+        res.status(500).json({ error: 'Server error during Google auth' });
+    }
+});
 
 export default router;
 
