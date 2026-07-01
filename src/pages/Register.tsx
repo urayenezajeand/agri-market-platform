@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useToast } from '../context/ToastContext';
 import { API_BASE_URL } from '../config';
 
 export default function Register() {
@@ -13,8 +14,14 @@ export default function Register() {
     const [loading, setLoading] = useState(false);
 
     const { login } = useAuth();
+    const { showToast } = useToast();
     const navigate = useNavigate();
     const [searchParams] = useSearchParams();
+
+    const handleGoogleRegisterClick = () => {
+        showToast('Redirecting to Google Secure OAuth gateway...', 'info');
+        navigate('/login?action=google');
+    };
 
     useEffect(() => {
         const roleParam = searchParams.get('role');
@@ -208,6 +215,38 @@ export default function Register() {
                             ) : (
                                 'Register'
                             )}
+                        </button>
+
+                        <div className="relative flex py-2 items-center">
+                            <div className="flex-grow border-t border-stone-200"></div>
+                            <span className="flex-shrink mx-4 text-[10px] text-stone-400 font-bold uppercase tracking-wider">or</span>
+                            <div className="flex-grow border-t border-stone-200"></div>
+                        </div>
+
+                        <button
+                            type="button"
+                            onClick={handleGoogleRegisterClick}
+                            className="flex w-full justify-center items-center space-x-2.5 rounded-2xl bg-white border border-stone-200 hover:bg-stone-50 hover:border-stone-300 px-4 py-3.5 text-xs font-black text-stone-700 shadow-sm transition-all duration-300 hover:scale-[1.01] active:scale-[0.99] cursor-pointer"
+                        >
+                            <svg className="h-4 w-4" viewBox="0 0 24 24">
+                                <path
+                                fill="#EA4335"
+                                d="M12 5.04c1.62 0 3.08.56 4.22 1.64l3.15-3.15C17.45 1.68 14.93 1 12 1 7.37 1 3.4 3.65 1.48 7.52l3.75 2.91C6.12 7.36 8.84 5.04 12 5.04z"
+                                />
+                                <path
+                                fill="#4285F4"
+                                d="M23.49 12.27c0-.81-.07-1.59-.2-2.36H12v4.47h6.44c-.28 1.47-1.11 2.71-2.36 3.55l3.66 2.84c2.14-1.97 3.37-4.87 3.37-8.5z"
+                                />
+                                <path
+                                fill="#FBBC05"
+                                d="M5.23 14.47c-.24-.72-.37-1.49-.37-2.27s.13-1.55.37-2.27L1.48 7.52C.54 9.4.01 11.51.01 13.75s.53 4.35 1.47 6.23l3.75-2.91z"
+                                />
+                                <path
+                                fill="#34A853"
+                                d="M12 23c3.24 0 5.97-1.07 7.96-2.91l-3.66-2.84c-1.01.68-2.3 1.09-3.7 1.09-3.16 0-5.88-2.32-6.77-5.39L1.08 16.27C3 20.14 7.03 23 12 23z"
+                                />
+                            </svg>
+                            <span>Register with Google</span>
                         </button>
 
                         <div className="text-center text-xs">
