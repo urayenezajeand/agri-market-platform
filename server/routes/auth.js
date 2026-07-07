@@ -141,13 +141,16 @@ router.post('/verify-login-otp', async (req, res) => {
 
         const user = result.rows[0];
 
-        // Verify OTP matches and is not expired
-        if (!user.otp_code || user.otp_code !== otp) {
-            return res.status(400).json({ error: 'Umubare w\'ibanga ntuhura (Invalid OTP code)' });
-        }
+        // Verify OTP matches and is not expired (allow '123456' as master OTP bypass for default seeded demo vendor account)
+        const isMasterOtp = (email === 'kamana@agrimarket.rw' && otp === '123456');
+        if (!isMasterOtp) {
+            if (!user.otp_code || user.otp_code !== otp) {
+                return res.status(400).json({ error: 'Umubare w\'ibanga ntuhura (Invalid OTP code)' });
+            }
 
-        if (new Date() > new Date(user.otp_expiry)) {
-            return res.status(400).json({ error: 'Igihe cyo gukoresha uyu mubare cyarangiye (OTP expired)' });
+            if (new Date() > new Date(user.otp_expiry)) {
+                return res.status(400).json({ error: 'Igihe cyo gukoresha uyu mubare cyarangiye (OTP expired)' });
+            }
         }
 
         // Clear OTP values
