@@ -81,7 +81,7 @@ export default function Checkout() {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify({ address, phone: cleanedPhone, items })
+        body: JSON.stringify({ shipping_address: address, phone: cleanedPhone, items })
       });
 
       const data = await res.json();
