@@ -1012,7 +1012,7 @@ export default function VendorDashboard() {
                                   <span className="text-[10px] text-slate-400">{sale.phone}</span>
                                 </div>
                               </td>
-                              <td className="p-5 font-extrabold text-slate-900">{sale.product_name}</td>
+                              <td className="p-5 font-extrabold text-slate-900">{sale.product_name || 'Deleted Crop'}</td>
                               <td className="p-5 text-right text-slate-700">{sale.quantity} units</td>
                               <td className="p-5 text-right text-emerald-600 font-black">
                                 {(Number(sale.price) * sale.quantity).toLocaleString()} RWF
@@ -1084,7 +1084,7 @@ export default function VendorDashboard() {
                         <div className="grid grid-cols-2 gap-4 text-xs font-semibold text-slate-650">
                           <div>
                             <span className="text-[9px] text-slate-400 uppercase tracking-wide block mb-0.5 font-bold">Crop Item</span>
-                            <span className="text-slate-900 font-extrabold">{viewingOrder.product_name}</span>
+                            <span className="text-slate-900 font-extrabold">{viewingOrder.product_name || 'Deleted Crop'}</span>
                           </div>
                           <div>
                             <span className="text-[9px] text-slate-400 uppercase tracking-wide block mb-0.5 font-bold">Quantity</span>

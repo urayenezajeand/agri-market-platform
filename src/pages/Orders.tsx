@@ -77,6 +77,7 @@ export default function Orders() {
   };
 
   const getCategoryEmoji = (name: string) => {
+    if (!name) return '🍃';
     const lowercaseName = name.toLowerCase();
     if (lowercaseName.includes('tomato') || lowercaseName.includes('cabbage') || lowercaseName.includes('carrot') || lowercaseName.includes('spinach') || lowercaseName.includes('ishiu') || lowercaseName.includes('imboga')) return '🥦';
     if (lowercaseName.includes('maize') || lowercaseName.includes('rice') || lowercaseName.includes('bean') || lowercaseName.includes('wheat') || lowercaseName.includes('ibigori')) return '🌾';
@@ -231,7 +232,7 @@ export default function Orders() {
                             </span>
                             <div>
                               <h5 className="text-xs font-bold text-slate-900 leading-tight">
-                                {item.product_name}
+                                {item.product_name || 'Deleted Crop'}
                               </h5>
                               <p className="text-[10px] text-slate-400 font-bold mt-0.5">
                                 Unit Price: {Number(item.price).toLocaleString()} RWF
