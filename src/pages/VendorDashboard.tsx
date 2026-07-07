@@ -1067,9 +1067,34 @@ export default function VendorDashboard() {
               </div>
 
               <div>
-                <label htmlFor="crop-image" className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5 pl-1">
-                  Image URL
+                <label htmlFor="crop-image" className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5 pl-1 flex justify-between items-center">
+                  <span>Image URL</span>
+                  {imageUrl && <span className="text-[10px] text-emerald-600 font-extrabold uppercase">Live Preview</span>}
                 </label>
+                
+                {imageUrl && (
+                  <div className="mb-3 w-full h-40 rounded-2xl overflow-hidden border border-slate-100 bg-slate-50 flex items-center justify-center relative">
+                    <img
+                      src={imageUrl}
+                      alt="Crop image preview"
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        e.currentTarget.style.display = 'none';
+                        const parent = e.currentTarget.parentElement;
+                        if (parent) {
+                          const placeholder = parent.querySelector('.preview-error-placeholder');
+                          if (placeholder) placeholder.classList.remove('hidden');
+                        }
+                      }}
+                    />
+                    <div className="preview-error-placeholder hidden absolute inset-0 flex flex-col items-center justify-center bg-rose-50 text-rose-800 p-4 text-center space-y-1">
+                      <span className="text-2xl">⚠️</span>
+                      <span className="text-xs font-extrabold">Image Failed to Load</span>
+                      <span className="text-[9px] text-rose-600 leading-normal font-semibold">Check if the URL is valid, complete, and contains the full query parameters.</span>
+                    </div>
+                  </div>
+                )}
+
                 <input
                   id="crop-image"
                   type="text"
