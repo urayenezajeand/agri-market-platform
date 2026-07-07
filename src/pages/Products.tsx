@@ -281,8 +281,14 @@ export default function Products() {
               </div>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-                {filteredProducts.map((p) => (
-                  <Link
+                {filteredProducts.map((p) => {
+                  const hasDiscount = p.discount_percent && p.discount_percent > 0;
+                  const finalPrice = hasDiscount
+                    ? Math.round(Number(p.price) * (1 - (p.discount_percent || 0) / 100))
+                    : Number(p.price);
+
+                  return (
+                    <Link
                     key={p.id}
                     to={`/product/${p.id}`}
                     className="group bg-white rounded-3xl border border-slate-105 overflow-hidden hover:shadow-xl hover:shadow-slate-150/40 transition-all duration-300 flex flex-col justify-between"
@@ -346,11 +352,11 @@ export default function Products() {
                         {/* Price details */}
                         <div className="flex items-baseline space-x-2 pt-1 border-t border-slate-50">
                           <span className="text-xs font-black text-emerald-600">
-                            {Number(p.price).toLocaleString()} RWF
+                            {finalPrice.toLocaleString()} RWF
                           </span>
-                          {p.discount_percent && p.discount_percent > 0 ? (
+                          {hasDiscount ? (
                             <span className="text-[10px] text-slate-400 font-bold line-through">
-                              {Math.round(Number(p.price) / (1 - p.discount_percent / 100)).toLocaleString()} RWF
+                              {Number(p.price).toLocaleString()} RWF
                             </span>
                           ) : null}
                         </div>
@@ -384,7 +390,7 @@ export default function Products() {
                           addToCart({
                             id: p.id,
                             name: p.name,
-                            price: Number(p.price),
+                            price: finalPrice,
                             image_url: p.image_url || '',
                             vendor_id: p.vendor_id,
                             stock: p.stock
@@ -397,7 +403,7 @@ export default function Products() {
                       </button>
                     </div>
                   </Link>
-                ))}
+                )})}
               </div>
             )}
           </div>

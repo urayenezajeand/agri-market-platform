@@ -71,11 +71,12 @@ export default function Deals() {
           .filter((p: any) => p.discount_percent > 0)
           .map((p: any) => {
             const discountPercent = p.discount_percent;
-            // Calculate original price prior to the applied discount percentage
-            const originalPrice = Math.round(Number(p.price) / (1 - discountPercent / 100));
+            const originalPrice = Number(p.price);
+            const discountedPrice = Math.round(originalPrice * (1 - discountPercent / 100));
             
             return {
               ...p,
+              price: discountedPrice,
               discountPercent,
               originalPrice,
               vendor_name: p.vendor_name || 'Local Cooperative'

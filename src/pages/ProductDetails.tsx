@@ -15,6 +15,7 @@ interface Product {
   vendor_id: number;
   vendor_name?: string;
   vendor_email?: string;
+  discount_percent?: number;
 }
 
 export default function ProductDetails() {
@@ -126,11 +127,17 @@ export default function ProductDetails() {
     }
   };
 
+  const hasDiscount = product && product.discount_percent && product.discount_percent > 0;
+  const productPrice = hasDiscount
+    ? Math.round(Number(product.price) * (1 - (product.discount_percent || 0) / 100))
+    : Number(product.price);
+  const totalPrice = productPrice * quantity;
+
   const handleAddToCart = () => {
     addToCart({
       id: product.id,
       name: product.name,
-      price: Number(product.price),
+      price: productPrice,
       image_url: product.image_url || '',
       vendor_id: product.vendor_id,
       stock: product.stock
@@ -150,9 +157,6 @@ export default function ProductDetails() {
       default: return '🍃';
     }
   };
-
-  const productPrice = Number(product.price);
-  const totalPrice = productPrice * quantity;
 
   return (
     <div className="min-h-[calc(100vh-62px)] bg-slate-50/50 pb-24 pt-4 px-4 sm:px-6">
@@ -176,6 +180,13 @@ export default function ProductDetails() {
               {getCategoryEmoji(product.category)}
             </span>
             
+            {/* Discount Tag */}
+            {hasDiscount && (
+              <div className="absolute top-3.5 left-3.5 z-10 bg-amber-500 text-slate-950 text-[9px] font-black uppercase tracking-widest px-2.5 py-1 rounded-md shadow-md animate-pulse">
+                {(product.discount_percent || 0)}% OFF
+              </div>
+            )}
+
             {/* Image overlays on top */}
             {product.image_url && (
               <img
@@ -249,7 +260,14 @@ export default function ProductDetails() {
               <div className="flex items-center justify-between">
                 <div>
                   <span className="text-xs font-semibold text-slate-400 block">Unit Price</span>
-                  <span className="text-lg font-black text-slate-900">{productPrice.toLocaleString()} RWF</span>
+                  <div className="flex items-baseline space-x-2">
+                    <span className="text-lg font-black text-slate-900">{productPrice.toLocaleString()} RWF</span>
+                    {hasDiscount && (
+                      <span className="text-xs text-slate-405 line-through font-bold">
+                        {Number(product.price).toLocaleString()} RWF
+                      </span>
+                    )}
+                  </div>
                 </div>
 
                 {product.stock > 0 && (

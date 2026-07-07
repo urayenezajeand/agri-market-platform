@@ -542,6 +542,10 @@ export default function Home() {
                 <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                   {filteredProducts.map((p) => {
                     const rating = getMockRating(p.id);
+                    const hasDiscount = p.discount_percent && p.discount_percent > 0;
+                    const finalPrice = hasDiscount
+                      ? Math.round(Number(p.price) * (1 - (p.discount_percent || 0) / 100))
+                      : Number(p.price);
 
                     return (
                       <Link
@@ -630,11 +634,11 @@ export default function Home() {
                           {/* Crossed-out original pricing tag */}
                           <div className="flex items-baseline space-x-1.5">
                             <span className="text-base font-black text-slate-900">
-                              {Number(p.price).toLocaleString()} RWF
+                              {finalPrice.toLocaleString()} RWF
                             </span>
-                            {p.discount_percent && p.discount_percent > 0 ? (
+                            {hasDiscount ? (
                               <span className="text-xs text-slate-400 line-through font-semibold">
-                                {Math.round(Number(p.price) / (1 - p.discount_percent / 100)).toLocaleString()} RWF
+                                {Number(p.price).toLocaleString()} RWF
                               </span>
                             ) : null}
                           </div>
@@ -679,7 +683,7 @@ export default function Home() {
                                 addToCart({
                                   id: p.id,
                                   name: p.name,
-                                  price: Number(p.price),
+                                  price: finalPrice,
                                   image_url: p.image_url || '',
                                   vendor_id: p.vendor_id,
                                   stock: p.stock
