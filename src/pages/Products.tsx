@@ -41,11 +41,14 @@ export default function Products() {
         if (!res.ok) throw new Error('Failed to fetch catalog.');
         const data = await res.json();
         
-        // Mock rating data for visual excellence
-        const enriched = data.map((p: any) => ({
-          ...p,
-          rating: p.id === 1 ? 4.8 : p.id === 2 ? 4.6 : p.id === 3 ? 4.9 : p.id === 4 ? 4.7 : p.id === 12 ? 4.5 : 4.4
-        }));
+        // Mock rating data for visual excellence (modulo-based to support arbitrary DB IDs)
+        const enriched = data.map((p: any) => {
+          const ratings = [4.8, 4.7, 4.9, 4.6];
+          return {
+            ...p,
+            rating: ratings[p.id % 4]
+          };
+        });
         
         setProducts(enriched);
       } catch (err) {
