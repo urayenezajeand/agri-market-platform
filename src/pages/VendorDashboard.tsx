@@ -45,6 +45,9 @@ export default function VendorDashboard() {
   // Sidebar responsive drawer state
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
+  // Store local discount adjustments to avoid violating Rules of Hooks
+  const [pendingDiscounts, setPendingDiscounts] = useState<{ [productId: number]: number }>({});
+
   // Create / Edit modal state
   const [modalOpen, setModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
@@ -792,9 +795,9 @@ export default function VendorDashboard() {
                 ) : (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     {products.map((p) => {
-                      const [localDiscount, setLocalDiscount] = useState(p.discount_percent || 0);
-                      const isDiscounted = localDiscount > 0;
-                      const discountedPrice = Number(p.price) * (1 - localDiscount / 100);
+                      const currentDiscount = pendingDiscounts[p.id] !== undefined ? pendingDiscounts[p.id] : (p.discount_percent || 0);
+                      const isDiscounted = currentDiscount > 0;
+                      const discountedPrice = Number(p.price) * (1 - currentDiscount / 100);
 
                       const updateDiscountAPI = async () => {
                         const payload = {
@@ -804,7 +807,7 @@ export default function VendorDashboard() {
                           stock: p.stock,
                           category: p.category,
                           image_url: p.image_url,
-                          discount_percent: localDiscount
+                          discount_percent: currentDiscount
                         };
                         try {
                           const res = await fetch(`${API_BASE_URL}/api/products/${p.id}`, {
@@ -816,7 +819,7 @@ export default function VendorDashboard() {
                             body: JSON.stringify(payload)
                           });
                           if (!res.ok) throw new Error("Failed to update discount.");
-                          showToast(`Updated discount for ${p.name} to ${localDiscount}%!`, "success");
+                          showToast(`Updated discount for ${p.name} to ${currentDiscount}%!`, "success");
                           fetchData();
                         } catch (e: any) {
                           showToast(e.message || "Failed to update discount.", "error");
@@ -838,15 +841,15 @@ export default function VendorDashboard() {
                           <div className="space-y-2">
                             <div className="flex justify-between text-xs font-bold">
                               <span className="text-slate-500">Discount Amount</span>
-                              <span className="text-amber-600 font-extrabold">{localDiscount}% OFF</span>
+                              <span className="text-amber-600 font-extrabold">{currentDiscount}% OFF</span>
                             </div>
                             <input
                               type="range"
                               min="0"
                               max="50"
                               step="5"
-                              value={localDiscount}
-                              onChange={(e) => setLocalDiscount(Number(e.target.value))}
+                              value={currentDiscount}
+                              onChange={(e) => setPendingDiscounts(prev => ({ ...prev, [p.id]: Number(e.target.value) }))}
                               className="w-full accent-amber-500 h-1.5 bg-slate-100 rounded-lg appearance-none cursor-pointer"
                             />
                             <div className="flex justify-between text-[9px] text-slate-400 font-bold">
@@ -871,7 +874,7 @@ export default function VendorDashboard() {
                                   : 'bg-slate-900 hover:bg-slate-955 text-white'
                               }`}
                             >
-                              {localDiscount === (p.discount_percent || 0) ? 'Discount Applied ✓' : 'Update Flash Sale ⚡'}
+                              {currentDiscount === (p.discount_percent || 0) ? 'Discount Applied ✓' : 'Update Flash Sale ⚡'}
                             </button>
                           </div>
                         </div>
