@@ -156,7 +156,7 @@ export default function Register() {
 
         // 1. Password Match Validation
         if (password !== confirmPassword) {
-            return setError('Ijambo ry\'ibanga ntirihuye (Passwords do not match)');
+            return setError('Passwords do not match');
         }
 
         setLoading(true);
@@ -186,7 +186,7 @@ export default function Register() {
             }
         } catch (err: any) {
             console.error(err);
-            setError(err.message || 'Kwiyandikisha byanze. Koresha indi email.');
+            setError(err.message || 'Registration failed. Please use another email address.');
         } finally {
             setLoading(false);
         }

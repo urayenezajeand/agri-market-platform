@@ -193,7 +193,7 @@ export default function Home() {
         setProducts(data);
       } catch (err: any) {
         console.error(err);
-        setError(err.message || 'Guhuza na server byanze. Reba ko backend iri kwaka.');
+        setError(err.message || 'Failed to connect to the server. Please check if the backend is running.');
       } finally {
         setLoading(false);
       }

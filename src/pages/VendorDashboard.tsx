@@ -101,7 +101,7 @@ export default function VendorDashboard() {
       
     } catch (err: any) {
       console.error(err);
-      setError(err.message || 'Guhuza na server byanze.');
+      setError(err.message || 'Failed to connect to the server.');
     } finally {
       setLoading(false);
     }
@@ -212,7 +212,7 @@ export default function VendorDashboard() {
       fetchData();
     } catch (err: any) {
       console.error(err);
-      showToast(err.message || 'Gusiba byanze.', 'error');
+      showToast(err.message || 'Failed to delete product.', 'error');
     }
   };
 
@@ -243,7 +243,7 @@ export default function VendorDashboard() {
       fetchData(); // Reload orders
     } catch (err: any) {
       console.error(err);
-      showToast(err.message || 'Guhindura status byanze.', 'error');
+      showToast(err.message || 'Failed to update order status.', 'error');
     }
   };
 

@@ -57,7 +57,7 @@ export default function Orders() {
         setOrders(data);
       } catch (err: any) {
         console.error(err);
-        setError(err.message || 'Gushaka ama-orders byanze.');
+        setError(err.message || 'Failed to retrieve order history.');
       } finally {
         setLoading(false);
       }

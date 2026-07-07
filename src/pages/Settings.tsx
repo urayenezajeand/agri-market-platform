@@ -99,13 +99,13 @@ export default function Settings() {
         throw new Error(data.error || 'Failed to change password');
       }
 
-      showToast('Ijambo ry\'ibanga ryahinduwe neza! (Password updated successfully)', 'success');
+      showToast('Password updated successfully!', 'success');
       setCurrentPassword('');
       setNewPassword('');
       setConfirmPassword('');
     } catch (err: any) {
       console.error(err);
-      showToast(err.message || 'Ntibishoboye guhindura ijambo ry\'ibanga.', 'error');
+      showToast(err.message || 'Failed to update password.', 'error');
     } finally {
       setPasswordLoading(false);
     }

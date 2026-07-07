@@ -107,7 +107,7 @@ export default function ProductDetails() {
       <div className="flex min-h-[calc(100vh-140px)] flex-col items-center justify-center bg-slate-50 px-4 text-center">
         <span className="text-5xl mb-4">🍂</span>
         <h2 className="text-xl font-bold text-slate-800">Crop Not Found</h2>
-        <p className="text-sm text-slate-500 mt-1 max-w-xs">{error || 'Iki gicuruzwa ntikibonetse.'}</p>
+        <p className="text-sm text-slate-500 mt-1 max-w-xs">{error || 'This product was not found.'}</p>
         <Link to="/" className="mt-6 rounded-2xl bg-emerald-600 px-6 py-2.5 text-xs font-bold text-white shadow-md transition-all hover:bg-emerald-700">
           Back to Shop
         </Link>

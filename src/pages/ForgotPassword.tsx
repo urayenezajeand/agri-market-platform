@@ -75,11 +75,11 @@ export default function ForgotPassword() {
         throw new Error(data.error || 'Failed to verify OTP');
       }
 
-      showToast('Ijambo ry\'ibanga ryahinduwe neza! Mwongere mwinjire.', 'success');
+      showToast('Password updated successfully! Please log in again.', 'success');
       navigate('/login');
     } catch (err: any) {
       console.error(err);
-      setError(err.message || 'OTP ntiyemewe cg igihe cyayo cyarangiye.');
+      setError(err.message || 'Invalid or expired OTP code.');
     } finally {
       setLoading(false);
     }

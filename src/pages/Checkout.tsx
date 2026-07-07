@@ -95,7 +95,7 @@ export default function Checkout() {
       setOrderSuccess(data.order);
     } catch (err: any) {
       console.error(err);
-      setError(err.message || 'Gukora checkout byanze. Ongera ugerageze.');
+      setError(err.message || 'Checkout process failed. Please try again.');
     } finally {
       setLoading(false);
     }

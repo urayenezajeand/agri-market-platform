@@ -184,7 +184,7 @@ export default function Login() {
       if (data.otpRequired) {
         setOtpRequired(true);
         setLoginOtpHint(data.otp || '');
-        showToast('Nyamuneka verification OTP yoherejwe kuri imeli! (OTP challenge sent)', 'success');
+        showToast('OTP verification code sent to your email!', 'success');
         return;
       }
 
@@ -198,9 +198,9 @@ export default function Login() {
     } catch (err: any) {
       console.error(err);
       if (err.message === 'Failed to fetch' || err.name === 'TypeError') {
-        setError('Ikirogoya cy\'umuyoboro. Nyamuneka ongera ugerageze (Network connection error. Please check your internet and try again).');
+        setError('Network connection error. Please check your internet and try again.');
       } else {
-        setError(err.message || 'Kwinjira byanze: Reba imeli n\'ijambo ry\'ibanga.');
+        setError(err.message || 'Login failed: Check your email and password.');
       }
     } finally {
       setLoading(false);
@@ -228,7 +228,7 @@ export default function Login() {
       // 2. Save session details
       login(data.token, data.user);
       showToast(
-        `Kwinjira byagenze neza! Winjiye nka ${data.user.role === 'vendor' ? 'Umuhinzi / Seller' : 'Umuguzi / Buyer'} (${data.user.email})`,
+        `Login successful! Logged in as ${data.user.role === 'vendor' ? 'Seller' : 'Buyer'} (${data.user.email})`,
         'success'
       );
 
@@ -241,7 +241,7 @@ export default function Login() {
     } catch (err: any) {
       console.error(err);
       if (err.message === 'Failed to fetch' || err.name === 'TypeError') {
-        setError('Ikirogoya cy\'umuyoboro. Nyamuneka ongera ugerageze (Network connection error. Please check your internet and try again).');
+        setError('Network connection error. Please check your internet and try again.');
       } else {
         setError(err.message || 'OTP code is invalid or expired.');
       }
@@ -384,7 +384,7 @@ export default function Login() {
           <form className="mt-6 space-y-6" onSubmit={handleVerifyOtp}>
             <div className="space-y-4 text-center">
               <p className="text-xs text-slate-500 leading-relaxed font-semibold">
-                Twakohereje umubare w'ibanga (OTP code) kuri imeli yawe. Nyamuneka yinjize hano kugira ngo winjire.
+                We sent a verification OTP code to your email. Please enter it below to log in.
               </p>
               
               {/* Visual Presentation OTP Helper Card */}
