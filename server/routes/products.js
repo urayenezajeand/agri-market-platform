@@ -63,15 +63,16 @@ router.get('/:id', async (req, res) => {
 
 // 3. GUSHIRAHO IGICURUZWA GISHYA (Create a new product - Vendor Only)
 router.post('/', authenticateToken, requireVendor, async (req, res) => {
-    const { name, description, price, stock, category, image_url } = req.body;
+    const { name, description, price, stock, category, image_url, discount_percent } = req.body;
+    const discount = Number(discount_percent) || 0;
 
     // Gufata ID ya vendor muri Token securely (loaded by authenticateToken middleware)
     const vendor_id = req.user.id;
 
     try {
         const result = await pool.query(
-            'INSERT INTO products (name, description, price, stock, category, image_url, vendor_id) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *',
-            [name, description, price, stock, category, image_url, vendor_id]
+            'INSERT INTO products (name, description, price, stock, category, image_url, vendor_id, discount_percent) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *',
+            [name, description, price, stock, category, image_url, vendor_id, discount]
         );
 
         // Subiza browser igicuruzwa twamaze kurema muri DB (status 201 Created)
@@ -85,7 +86,8 @@ router.post('/', authenticateToken, requireVendor, async (req, res) => {
 // 4. GUHINDURA IGICURUZWA (Update product - Vendor Only, Owner Check)
 router.put('/:id', authenticateToken, requireVendor, async (req, res) => {
     const { id } = req.params;
-    const { name, description, price, stock, category, image_url } = req.body;
+    const { name, description, price, stock, category, image_url, discount_percent } = req.body;
+    const discount = Number(discount_percent) || 0;
     const vendor_id = req.user.id;
 
     try {
@@ -103,8 +105,8 @@ router.put('/:id', authenticateToken, requireVendor, async (req, res) => {
 
         // Guhindura amakuru (Update details in DB)
         const result = await pool.query(
-            'UPDATE products SET name = $1, description = $2, price = $3, stock = $4, category = $5, image_url = $6 WHERE id = $7 RETURNING *',
-            [name, description, price, stock, category, image_url, id]
+            'UPDATE products SET name = $1, description = $2, price = $3, stock = $4, category = $5, image_url = $6, discount_percent = $7 WHERE id = $8 RETURNING *',
+            [name, description, price, stock, category, image_url, discount, id]
         );
 
         res.json(result.rows[0]);
