@@ -248,35 +248,250 @@ export default function VendorDashboard() {
     .filter(s => s.status !== 'cancelled')
     .reduce((sum, item) => sum + (Number(item.price) * item.quantity), 0);
 
-  // Generate dynamic client-side CSV report
-  const generateCsvReport = () => {
-    let csv = "REPORT,AGRI-MARKET VENDOR HARVEST & AUDIT REPORT\n";
-    csv += `Generated On,${new Date().toLocaleString()}\n`;
-    csv += `Vendor,Farmer ${user?.name || 'Rwandan Farmer'} (${user?.email || 'No email'})\n\n`;
+  // Generate dynamic client-side PDF audit report
+  const generatePdfReport = () => {
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) {
+      showToast("Pop-up blocked. Please allow pop-ups to generate PDF reports.", "error");
+      return;
+    }
     
-    // Inventory section
-    csv += "=== CROP CATALOGUE INVENTORY ===\n";
-    csv += "Crop ID,Crop Name,Category,Price (RWF),Stock Level,Discount (%)\n";
-    products.forEach(p => {
-      csv += `${p.id},"${p.name.replace(/"/g, '""')}",${p.category},${p.price},${p.stock},${p.discount_percent || 0}\n`;
-    });
+    // Prepare HTML content with beautiful typography and styles
+    const html = `
+      <html>
+        <head>
+          <title>AgriMarket Vendor Audit Report</title>
+          <style>
+            @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap');
+            body {
+              font-family: 'Outfit', sans-serif;
+              color: #1e293b;
+              padding: 40px;
+              line-height: 1.5;
+              background-color: #ffffff;
+            }
+            .header {
+              display: flex;
+              justify-content: space-between;
+              align-items: center;
+              border-bottom: 3px solid #059669;
+              padding-bottom: 24px;
+              margin-bottom: 35px;
+            }
+            .logo {
+              font-size: 26px;
+              font-weight: 800;
+              color: #047857;
+              letter-spacing: -0.5px;
+            }
+            .meta {
+              text-align: right;
+              font-size: 11px;
+              color: #64748b;
+              font-weight: 500;
+            }
+            h2 {
+              font-size: 14px;
+              color: #0f172a;
+              border-bottom: 2px solid #f1f5f9;
+              padding-bottom: 10px;
+              margin-top: 40px;
+              text-transform: uppercase;
+              letter-spacing: 1px;
+              font-weight: 800;
+            }
+            table {
+              width: 100%;
+              border-collapse: collapse;
+              margin-top: 15px;
+              font-size: 11px;
+            }
+            th, td {
+              padding: 12px 10px;
+              text-align: left;
+              border-bottom: 1px solid #f1f5f9;
+            }
+            th {
+              background-color: #f8fafc;
+              color: #475569;
+              font-weight: 800;
+              text-transform: uppercase;
+              font-size: 10px;
+              letter-spacing: 0.5px;
+            }
+            tr:hover {
+              background-color: #f8fafc;
+            }
+            .total-row {
+              font-weight: 800;
+              background-color: #f8fafc;
+            }
+            .badge {
+              padding: 4px 8px;
+              border-radius: 9999px;
+              font-size: 9px;
+              font-weight: 800;
+              text-transform: uppercase;
+              display: inline-block;
+            }
+            .badge-delivered { background-color: #d1fae5; color: #065f46; }
+            .badge-shipped { background-color: #dbeafe; color: #1e40af; }
+            .badge-pending { background-color: #ffedd5; color: #9a3412; }
+            .badge-cancelled { background-color: #fee2e2; color: #991b1b; }
+            
+            .stats-grid {
+              display: grid;
+              grid-template-columns: 1fr 1fr;
+              gap: 20px;
+              margin-bottom: 30px;
+            }
+            .stat-card {
+              background: #f8fafc;
+              padding: 20px;
+              border-radius: 16px;
+              border: 1px solid #f1f5f9;
+            }
+            .stat-label {
+              font-size: 9px;
+              color: #64748b;
+              font-weight: 800;
+              text-transform: uppercase;
+              letter-spacing: 0.5px;
+            }
+            .stat-val {
+              font-size: 22px;
+              font-weight: 800;
+              color: #0f172a;
+              margin-top: 6px;
+            }
+            .stat-val.earnings {
+              color: #059669;
+            }
+            .footer {
+              margin-top: 60px;
+              border-top: 1px solid #f1f5f9;
+              padding-top: 24px;
+              font-size: 10px;
+              color: #94a3b8;
+              text-align: center;
+              font-weight: 500;
+            }
+            @media print {
+              body {
+                padding: 0;
+              }
+              .no-print {
+                display: none;
+              }
+            }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <div>
+              <div class="logo">🌿 AgriMarket</div>
+              <div style="font-size: 12px; color: #64748b; margin-top: 4px; font-weight: 600;">SaaS Farmer Auditing System</div>
+            </div>
+            <div class="meta">
+              <div><strong>Generated On:</strong> \${new Date().toLocaleString()}</div>
+              <div><strong>Vendor Account:</strong> Farmer \${user?.name || 'Rwandan Farmer'}</div>
+              <div><strong>Email Address:</strong> \${user?.email || 'No email'}</div>
+            </div>
+          </div>
+
+          <div class="stats-grid">
+            <div class="stat-card">
+              <div class="stat-label">Catalogue & Stock Inventory</div>
+              <div class="stat-val">\${products.length} Crops Listed</div>
+              <div style="font-size: 11px; color: #64748b; margin-top: 4px; font-weight: 500;">Total Stock Level: \${products.reduce((sum, p) => sum + p.stock, 0)} units</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">Net Sales Accounting</div>
+              <div class="stat-val earnings">\${totalEarnings.toLocaleString()} RWF</div>
+              <div style="font-size: 11px; color: #64748b; margin-top: 4px; font-weight: 500;">Received from \${totalOrdersCount} completed orders</div>
+            </div>
+          </div>
+
+          <h2>Crop Catalog Ledger</h2>
+          <table>
+            <thead>
+              <tr>
+                <th style="width: 8%;">ID</th>
+                <th>Crop Name</th>
+                <th>Category</th>
+                <th style="text-align: right;">Unit Price</th>
+                <th style="text-align: right;">Available Stock</th>
+                <th style="text-align: right;">Active Discount</th>
+              </tr>
+            </thead>
+            <tbody>
+              \${products.map(p => \`
+                <tr>
+                  <td>#\${p.id}</td>
+                  <td><strong>\${p.name}</strong></td>
+                  <td>\${p.category}</td>
+                  <td style="text-align: right;">\${Number(p.price).toLocaleString()} RWF</td>
+                  <td style="text-align: right;">\${p.stock} units</td>
+                  <td style="text-align: right; color: #d97706; font-weight: bold;">
+                    \${p.discount_percent && p.discount_percent > 0 ? \`\${p.discount_percent}% OFF\` : '—'}
+                  </td>
+                </tr>
+              \`).join('')}
+            </tbody>
+          </table>
+
+          <h2>Sales & Shipment Orders</h2>
+          <table>
+            <thead>
+              <tr>
+                <th style="width: 8%;">ID</th>
+                <th>Product name</th>
+                <th style="text-align: right;">Unit Cost</th>
+                <th style="text-align: right;">Qty</th>
+                <th style="text-align: right;">Subtotal</th>
+                <th style="text-align: center;">Shipment Status</th>
+                <th>Customer Address</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${sales.map(s => `
+                <tr>
+                  <td>#${s.order_id}</td>
+                  <td><strong>${s.product_name}</strong></td>
+                  <td style="text-align: right;">${Number(s.price).toLocaleString()} RWF</td>
+                  <td style="text-align: right;">${s.quantity} units</td>
+                  <td style="text-align: right; font-weight: 700;">${(Number(s.price) * s.quantity).toLocaleString()} RWF</td>
+                  <td style="text-align: center;"><span class="badge badge-${s.status}">${s.status}</span></td>
+                  <td>${s.buyer_name} (${s.phone}) &bull; ${s.shipping_address}</td>
+                </tr>
+              `).join('')}
+              <tr class="total-row">
+                <td colspan="4" style="text-align: right; padding-top: 16px;">Total Realized Sales:</td>
+                <td style="text-align: right; padding-top: 16px; color: #047857; font-size: 12px;">${totalEarnings.toLocaleString()} RWF</td>
+                <td colspan="2"></td>
+              </tr>
+            </tbody>
+          </table>
+
+          <div class="footer">
+            <p>AgriMarket Digital Cooperatives. Supporting smallholders across Rwanda.</p>
+            <p style="font-size: 9px; color: #cbd5e1; margin-top: 6px;">Securely signed by Farmer \${user?.name || 'Rwandan Farmer'}.</p>
+          </div>
+
+          <script>
+            window.onload = function() {
+              window.print();
+              setTimeout(function() { window.close(); }, 500);
+            };
+          </script>
+        </body>
+      </html>
+    `;
     
-    csv += "\n=== SALES ORDERS AUDIT ===\n";
-    csv += "Order ID,Crop Name,Price (RWF),Quantity,Subtotal (RWF),Status,Order Date,Buyer Name,Buyer Phone,Shipping Address\n";
-    sales.forEach(s => {
-      const subtotal = Number(s.price) * s.quantity;
-      csv += `${s.order_id},"${s.product_name.replace(/"/g, '""')}",${s.price},${s.quantity},${subtotal},${s.status},${new Date(s.created_at).toLocaleDateString()},"${s.buyer_name}","${s.phone}","${s.shipping_address.replace(/"/g, '""')}"\n`;
-    });
-    
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.setAttribute("href", url);
-    link.setAttribute("download", `agrimarket_report_${(user?.name || 'farmer').replace(/\s+/g, '_').toLowerCase()}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    showToast("Audit report CSV generated and downloaded!", "success");
+    printWindow.document.open();
+    printWindow.document.write(html);
+    printWindow.document.close();
+    showToast("Opening browser print window to save PDF report...", "info");
   };
 
   // Group sales by date for line chart plotting
@@ -1052,15 +1267,15 @@ export default function VendorDashboard() {
                       Export Audit Report Logs
                     </h3>
                     <p className="text-xs text-emerald-100/90 leading-relaxed font-semibold">
-                      Compile a comprehensive breakdown of active catalogue values, stock levels, unit pricing, order totals, and customer shipment details. Export directly as a standard format `.csv` spreadsheet file.
+                      Compile a comprehensive breakdown of active catalogue values, stock levels, unit pricing, order totals, and customer shipment details. Export directly as a standard format `.pdf` report file.
                     </p>
                     <div className="pt-2">
                       <button
-                        onClick={generateCsvReport}
+                        onClick={generatePdfReport}
                         className="rounded-xl bg-white hover:bg-emerald-50 text-emerald-900 px-5 py-3.5 text-xs font-extrabold shadow-sm active:scale-95 transition-all cursor-pointer inline-flex items-center space-x-2"
                       >
                         <span>📥</span>
-                        <span>Download Audit CSV Report</span>
+                        <span>Download Audit PDF Report</span>
                       </button>
                     </div>
                   </div>
