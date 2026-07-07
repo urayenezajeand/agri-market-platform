@@ -25,6 +25,14 @@ export async function initializeDatabase() {
       console.error('Failed to ensure OTP columns:', e);
     }
 
+    // Ensure discount_percent column exists on products table (Dynamic migration)
+    try {
+      await pool.query("ALTER TABLE products ADD COLUMN IF NOT EXISTS discount_percent INT DEFAULT 0");
+      console.log('discount_percent column ensured on products table.');
+    } catch (e) {
+      console.error('Failed to ensure discount_percent column:', e);
+    }
+
     // 1. Seed a default vendor account (Farmer Kamana) if missing
     const userCheck = await pool.query("SELECT id FROM users WHERE email = 'kamana@agrimarket.rw'");
     let vendorId;

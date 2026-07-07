@@ -15,6 +15,7 @@ interface Product {
   vendor_id: number;
   rating?: number;
   vendor_name?: string;
+  discount_percent?: number;
 }
 
 export default function Products() {
@@ -137,9 +138,6 @@ export default function Products() {
     window.dispatchEvent(new Event('wishlist-updated'));
   };
 
-  const getOriginalPrice = (price: number) => {
-    return Math.floor(price * 1.25);
-  };
 
   const getCategoryEmoji = (cat: string) => {
     switch (cat.toLowerCase()) {
@@ -293,9 +291,11 @@ export default function Products() {
                       {/* Image header with fallback */}
                       <div className="relative h-44 w-full bg-gradient-to-br from-slate-50 to-slate-100/30 flex items-center justify-center select-none overflow-hidden border-b border-slate-50">
                         {/* 20% discount badge */}
-                        <div className="absolute top-3.5 left-3.5 z-10 bg-slate-900 text-white text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded shadow-sm">
-                          20% OFF
-                        </div>
+                        {p.discount_percent && p.discount_percent > 0 ? (
+                          <div className="absolute top-3.5 left-3.5 z-10 bg-amber-500 text-slate-950 text-[9px] font-black uppercase tracking-wider px-2.5 py-1 rounded shadow-sm animate-pulse">
+                            {p.discount_percent}% OFF
+                          </div>
+                        ) : null}
                         
                         {/* Wishlist toggle button */}
                         <button
@@ -348,9 +348,11 @@ export default function Products() {
                           <span className="text-xs font-black text-emerald-600">
                             {Number(p.price).toLocaleString()} RWF
                           </span>
-                          <span className="text-[10px] text-slate-400 font-bold line-through">
-                            {getOriginalPrice(Number(p.price)).toLocaleString()} RWF
-                          </span>
+                          {p.discount_percent && p.discount_percent > 0 ? (
+                            <span className="text-[10px] text-slate-400 font-bold line-through">
+                              {Math.round(Number(p.price) / (1 - p.discount_percent / 100)).toLocaleString()} RWF
+                            </span>
+                          ) : null}
                         </div>
                       </div>
                     </div>

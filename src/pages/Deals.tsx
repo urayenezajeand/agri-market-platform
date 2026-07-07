@@ -14,6 +14,8 @@ interface Product {
   image_url: string;
   vendor_id: number;
   vendor_name?: string;
+  discountPercent?: number;
+  originalPrice?: number;
 }
 
 export default function Deals() {
@@ -66,17 +68,18 @@ export default function Deals() {
         // Let's filter high-quality crops for our exclusive flash deals section.
         // We'll mark them as discounted products sold by Farmer Kamana (vendor_id = 1).
         const dealItems = data
-          .filter((p: any) => p.id === 1 || p.id === 2 || p.id === 4 || p.id === 12 || p.category === 'Vegetables' || p.category === 'Fruits')
+          .filter((p: any) => p.discount_percent > 0 || p.category === 'Vegetables' || p.category === 'Fruits')
           .map((p: any) => {
-            // Apply distinct discount percentages
-            const discountPercent = p.id === 1 ? 25 : p.id === 2 ? 20 : p.id === 4 ? 15 : 10;
+            const discountPercent = p.discount_percent > 0 
+              ? p.discount_percent 
+              : (p.id % 2 === 0 ? 20 : 15);
             const originalPrice = Math.round(Number(p.price) / (1 - discountPercent / 100));
             
             return {
               ...p,
               discountPercent,
               originalPrice,
-              vendor_name: p.vendor_id === 1 ? 'Farmer Kamana' : 'Local Cooperative'
+              vendor_name: p.vendor_name || 'Local Cooperative'
             };
           });
 

@@ -15,6 +15,7 @@ interface Product {
   image_url?: string;
   vendor_id: number;
   vendor_name?: string;
+  discount_percent?: number;
 }
 
 export default function Home() {
@@ -248,10 +249,6 @@ export default function Home() {
     }
   };
 
-  // Helper to calculate mock original price (crossed out) for discount styling
-  const getOriginalPrice = (price: number) => {
-    return Math.floor(price * 1.25); // Adds a 20% discount styling
-  };
 
 
 
@@ -544,7 +541,6 @@ export default function Home() {
                 // Product Card List matching Spurtcommerce styles
                 <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                   {filteredProducts.map((p) => {
-                    const originalPrice = getOriginalPrice(Number(p.price));
                     const rating = getMockRating(p.id);
 
                     return (
@@ -555,9 +551,11 @@ export default function Home() {
                       >
                         <div>
                           {/* Discount Badge */}
-                          <div className="absolute top-3.5 left-3.5 z-10 bg-slate-900/90 backdrop-blur-sm text-white text-[9px] font-extrabold uppercase tracking-widest px-2.5 py-1 rounded-md shadow-sm">
-                            20% OFF
-                          </div>
+                          {p.discount_percent && p.discount_percent > 0 ? (
+                            <div className="absolute top-3.5 left-3.5 z-10 bg-amber-500 text-slate-950 text-[9px] font-black uppercase tracking-widest px-2.5 py-1 rounded-md shadow-md animate-pulse">
+                              {p.discount_percent}% OFF
+                            </div>
+                          ) : null}
 
                           {/* Wishlist Heart Icon (SVG) */}
                           <button
@@ -634,9 +632,11 @@ export default function Home() {
                             <span className="text-base font-black text-slate-900">
                               {Number(p.price).toLocaleString()} RWF
                             </span>
-                            <span className="text-xs text-slate-400 line-through font-semibold">
-                              {originalPrice.toLocaleString()} RWF
-                            </span>
+                            {p.discount_percent && p.discount_percent > 0 ? (
+                              <span className="text-xs text-slate-400 line-through font-semibold">
+                                {Math.round(Number(p.price) / (1 - p.discount_percent / 100)).toLocaleString()} RWF
+                              </span>
+                            ) : null}
                           </div>
 
                           {/* Bottom Actions Row: Quick views + Add to Cart */}
