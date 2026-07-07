@@ -48,6 +48,11 @@ export default function VendorDashboard() {
   // Store local discount adjustments to avoid violating Rules of Hooks
   const [pendingDiscounts, setPendingDiscounts] = useState<{ [productId: number]: number }>({});
 
+  // CRUD Flash Deal modal state
+  const [createDealModalOpen, setCreateDealModalOpen] = useState(false);
+  const [selectedDealProductId, setSelectedDealProductId] = useState('');
+  const [dealDiscountPercent, setDealDiscountPercent] = useState('10');
+
   // Create / Edit modal state
   const [modalOpen, setModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
@@ -774,112 +779,259 @@ export default function VendorDashboard() {
               </div>
             )}
 
-            {/* DAILY DEALS / FLASH SALES TAB PANEL */}
+            {/* DAILY DEALS / FLASH SALES TAB PANEL (CRUD Interface) */}
             {activeTab === 'deals' && (
               <div className="space-y-6">
-                <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm space-y-4">
-                  <div>
-                    <h3 className="text-sm font-black text-slate-800 uppercase tracking-wider">Flash Sale & Daily Deals Configurator</h3>
-                    <p className="text-[10px] text-slate-400 font-semibold mt-1">
-                      Set a discount percentage to list your products instantly in the "Daily Deals (Flash Sale)" catalog page section.
+                
+                {/* 1. Header Banner & Action Button */}
+                <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0">
+                  <div className="space-y-1">
+                    <h3 className="text-sm font-black text-slate-800 uppercase tracking-wider">Active Flash Sales & Daily Deals</h3>
+                    <p className="text-[10px] text-slate-400 font-semibold leading-normal">
+                      Manage active discounts on your crop items. Creating a flash sale adds it directly to the customer "Daily Deals" catalog page.
                     </p>
                   </div>
+                  <button
+                    onClick={() => {
+                      const discountable = products.filter(p => !p.discount_percent || p.discount_percent === 0);
+                      if (discountable.length === 0) {
+                        showToast("All your catalog crops already have active discounts!", "info");
+                        return;
+                      }
+                      setSelectedDealProductId(discountable[0].id.toString());
+                      setDealDiscountPercent('10');
+                      setCreateDealModalOpen(true);
+                    }}
+                    className="inline-flex items-center justify-center space-x-2 rounded-2xl bg-amber-500 hover:bg-amber-600 text-slate-955 px-5 py-3 text-xs font-black shadow-lg shadow-amber-500/10 active:scale-95 transition-all cursor-pointer"
+                  >
+                    <span>⚡</span>
+                    <span>Create Flash Sale</span>
+                  </button>
                 </div>
 
-                {products.length === 0 ? (
+                {/* 2. Read: Active Flash Sales List */}
+                {products.filter(p => p.discount_percent && p.discount_percent > 0).length === 0 ? (
                   <div className="bg-white rounded-3xl p-16 border border-slate-100 shadow-sm text-center">
                     <span className="text-5xl block mb-4">⚡</span>
-                    <h3 className="text-sm font-bold text-slate-700">No crops available to discount</h3>
-                    <p className="text-xs text-slate-400 mt-1">Please list a crop first in catalogue.</p>
+                    <h3 className="text-sm font-bold text-slate-700">No active flash sales right now</h3>
+                    <p className="text-xs text-slate-400 mt-1 max-w-xs mx-auto">
+                      Click the "Create Flash Sale" button to select a crop from your catalogue and set up a deal.
+                    </p>
                   </div>
                 ) : (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {products.map((p) => {
-                      const currentDiscount = pendingDiscounts[p.id] !== undefined ? pendingDiscounts[p.id] : (p.discount_percent || 0);
-                      const isDiscounted = currentDiscount > 0;
-                      const discountedPrice = Number(p.price) * (1 - currentDiscount / 100);
+                    {products
+                      .filter(p => p.discount_percent && p.discount_percent > 0)
+                      .map((p) => {
+                        const currentDiscount = pendingDiscounts[p.id] !== undefined ? pendingDiscounts[p.id] : (p.discount_percent || 0);
+                        const discountedPrice = Number(p.price) * (1 - currentDiscount / 100);
 
-                      const updateDiscountAPI = async () => {
-                        const payload = {
-                          name: p.name,
-                          description: p.description,
-                          price: p.price,
-                          stock: p.stock,
-                          category: p.category,
-                          image_url: p.image_url,
-                          discount_percent: currentDiscount
-                        };
-                        try {
-                          const res = await fetch(`${API_BASE_URL}/api/products/${p.id}`, {
-                            method: 'PUT',
-                            headers: {
-                              'Content-Type': 'application/json',
-                              'Authorization': `Bearer ${token}`
+                        // Update Deal API Handler
+                        const updateDiscountAPI = async (newVal: number) => {
+                          const payload = {
+                            name: p.name,
+                            description: p.description,
+                            price: p.price,
+                            stock: p.stock,
+                            category: p.category,
+                            image_url: p.image_url,
+                            discount_percent: newVal
+                          };
+                          try {
+                            const res = await fetch(`${API_BASE_URL}/api/products/${p.id}`, {
+                              method: 'PUT',
+                              headers: {
+                                'Content-Type': 'application/json',
+                                'Authorization': `Bearer ${token}`
                             },
                             body: JSON.stringify(payload)
-                          });
-                          if (!res.ok) throw new Error("Failed to update discount.");
-                          showToast(`Updated discount for ${p.name} to ${currentDiscount}%!`, "success");
-                          fetchData();
-                        } catch (e: any) {
-                          showToast(e.message || "Failed to update discount.", "error");
-                        }
-                      };
+                            });
+                            if (!res.ok) throw new Error("Failed to update discount.");
+                            showToast(newVal === 0 ? `Removed discount for ${p.name}!` : `Updated discount for ${p.name} to ${newVal}%!`, "success");
+                            
+                            // Reset local pending changes for this product
+                            setPendingDiscounts(prev => {
+                              const copy = { ...prev };
+                              delete copy[p.id];
+                              return copy;
+                            });
+                            fetchData();
+                          } catch (e: any) {
+                            showToast(e.message || "Failed to update discount.", "error");
+                          }
+                        };
 
-                      return (
-                        <div key={p.id} className="bg-white rounded-3xl border border-slate-100 shadow-sm p-6 space-y-4">
-                          <div className="flex justify-between items-start border-b border-slate-50 pb-3">
-                            <div>
-                              <h4 className="text-sm font-extrabold text-slate-900">{p.name}</h4>
-                              <span className="text-[10px] text-slate-400 uppercase tracking-widest font-black">{p.category}</span>
+                        return (
+                          <div key={p.id} className="bg-white rounded-3xl border border-slate-100 shadow-sm p-6 space-y-4 hover:shadow-md transition-shadow relative overflow-hidden">
+                            
+                            {/* Visual diagonal badge decoration */}
+                            <div className="absolute top-0 right-0 bg-amber-500 text-slate-950 font-black text-[9px] tracking-wider uppercase py-1 px-3.5 rounded-bl-2xl">
+                              Active Deal
                             </div>
-                            <span className="text-xs font-bold text-slate-900 bg-slate-100 px-3 py-1 rounded-xl">
-                              Price: {Number(p.price).toLocaleString()} RWF
-                            </span>
+
+                            <div className="flex justify-between items-start border-b border-slate-50 pb-3">
+                              <div>
+                                <h4 className="text-sm font-black text-slate-900 leading-snug">{p.name}</h4>
+                                <span className="text-[10px] text-slate-400 uppercase tracking-widest font-extrabold">{p.category}</span>
+                              </div>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4 text-xs font-semibold text-slate-650">
+                              <div>
+                                <span className="text-[9px] text-slate-400 uppercase block">Base Price</span>
+                                <span className="text-slate-900">{Number(p.price).toLocaleString()} RWF</span>
+                              </div>
+                              <div>
+                                <span className="text-[9px] text-slate-400 uppercase block">Discounted Price</span>
+                                <span className="text-emerald-600 font-extrabold">{Math.round(discountedPrice).toLocaleString()} RWF</span>
+                              </div>
+                            </div>
+
+                            <div className="space-y-2 pt-2">
+                              <div className="flex justify-between text-xs font-bold">
+                                <span className="text-slate-500">Edit Discount Amount</span>
+                                <span className="text-amber-600 font-extrabold">{currentDiscount}% OFF</span>
+                              </div>
+                              <input
+                                type="range"
+                                min="5"
+                                max="50"
+                                step="5"
+                                value={currentDiscount}
+                                onChange={(e) => setPendingDiscounts(prev => ({ ...prev, [p.id]: Number(e.target.value) }))}
+                                className="w-full accent-amber-500 h-1.5 bg-slate-100 rounded-lg appearance-none cursor-pointer"
+                              />
+                              <div className="flex justify-between text-[9px] text-slate-400 font-bold">
+                                <span>5% Min</span>
+                                <span>50% Max</span>
+                              </div>
+                            </div>
+
+                            <div className="flex justify-between pt-2 border-t border-slate-50">
+                              <button
+                                onClick={() => updateDiscountAPI(0)} // Delete Deal
+                                className="text-xs font-bold text-rose-600 hover:text-rose-700 bg-rose-50 hover:bg-rose-100 px-3.5 py-2.5 rounded-xl border border-rose-100 transition-all cursor-pointer shadow-sm shadow-rose-100/10 animate-fade-in"
+                              >
+                                Delete Deal
+                              </button>
+                              
+                              <button
+                                onClick={() => updateDiscountAPI(currentDiscount)} // Update Deal
+                                disabled={currentDiscount === p.discount_percent}
+                                className={`text-xs font-bold px-4 py-2.5 rounded-xl transition-all shadow-sm cursor-pointer ${
+                                  currentDiscount === p.discount_percent
+                                    ? 'bg-slate-100 text-slate-400 cursor-not-allowed shadow-none'
+                                    : 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-600/10'
+                                }`}
+                              >
+                                {currentDiscount === p.discount_percent ? 'Saved ✓' : 'Update Deal ⚡'}
+                              </button>
+                            </div>
                           </div>
+                        );
+                      })}
+                  </div>
+                )}
 
-                          <div className="space-y-2">
-                            <div className="flex justify-between text-xs font-bold">
-                              <span className="text-slate-500">Discount Amount</span>
-                              <span className="text-amber-600 font-extrabold">{currentDiscount}% OFF</span>
-                            </div>
-                            <input
-                              type="range"
-                              min="0"
-                              max="50"
-                              step="5"
-                              value={currentDiscount}
-                              onChange={(e) => setPendingDiscounts(prev => ({ ...prev, [p.id]: Number(e.target.value) }))}
-                              className="w-full accent-amber-500 h-1.5 bg-slate-100 rounded-lg appearance-none cursor-pointer"
-                            />
-                            <div className="flex justify-between text-[9px] text-slate-400 font-bold">
-                              <span>0% (No Deal)</span>
-                              <span>50% Max</span>
-                            </div>
+                {/* 3. Create Deal Modal */}
+                {createDealModalOpen && (
+                  <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+                    <div className="relative w-full max-w-sm bg-white rounded-3xl shadow-xl p-6 sm:p-8 space-y-6 border border-slate-100">
+                      <div>
+                        <h3 className="text-lg font-black text-slate-900 tracking-tight leading-tight">Create Flash Sale</h3>
+                        <p className="text-xs text-slate-500 font-semibold mt-1">Select an active crop listing and set its discount rate.</p>
+                      </div>
+
+                      <div className="space-y-4">
+                        <div>
+                          <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5 pl-1">
+                            Choose Crop Listing
+                          </label>
+                          <select
+                            value={selectedDealProductId}
+                            onChange={(e) => setSelectedDealProductId(e.target.value)}
+                            className="block w-full rounded-2xl border border-slate-200 bg-slate-50/50 px-4 py-3 text-slate-950 focus:border-emerald-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 text-sm transition-all font-semibold"
+                          >
+                            {products
+                              .filter(p => !p.discount_percent || p.discount_percent === 0)
+                              .map(p => (
+                                <option key={p.id} value={p.id}>
+                                  {p.name} ({Number(p.price).toLocaleString()} RWF)
+                                </option>
+                              ))}
+                          </select>
+                        </div>
+
+                        <div className="space-y-2">
+                          <div className="flex justify-between text-xs font-bold">
+                            <span className="text-slate-500">Discount Amount</span>
+                            <span className="text-amber-600 font-extrabold">{dealDiscountPercent}% OFF</span>
                           </div>
-
-                          {isDiscounted && (
-                            <div className="bg-amber-50/50 rounded-2xl p-3 border border-amber-100 text-xs font-bold flex justify-between items-center text-amber-800">
-                              <span>💰 Active Checkout Price:</span>
-                              <span className="text-sm font-black">{discountedPrice.toLocaleString()} RWF</span>
-                            </div>
-                          )}
-
-                          <div className="flex justify-end pt-1">
-                            <button
-                              onClick={updateDiscountAPI}
-                              className={`text-xs font-bold px-4 py-2.5 rounded-xl transition-all shadow-sm cursor-pointer ${
-                                isDiscounted
-                                  ? 'bg-amber-500 hover:bg-amber-600 text-slate-950'
-                                  : 'bg-slate-900 hover:bg-slate-955 text-white'
-                              }`}
-                            >
-                              {currentDiscount === (p.discount_percent || 0) ? 'Discount Applied ✓' : 'Update Flash Sale ⚡'}
-                            </button>
+                          <input
+                            type="range"
+                            min="5"
+                            max="50"
+                            step="5"
+                            value={dealDiscountPercent}
+                            onChange={(e) => setDealDiscountPercent(e.target.value)}
+                            className="w-full accent-amber-500 h-1.5 bg-slate-100 rounded-lg appearance-none cursor-pointer"
+                          />
+                          <div className="flex justify-between text-[9px] text-slate-400 font-bold">
+                            <span>5% Min</span>
+                            <span>50% Max</span>
                           </div>
                         </div>
-                      );
-                    })}
+
+                        <div className="flex space-x-3 pt-2">
+                          <button
+                            type="button"
+                            onClick={() => setCreateDealModalOpen(false)}
+                            className="flex-1 rounded-2xl border border-slate-200 py-3 text-xs font-bold text-slate-500 hover:bg-slate-50 active:scale-95 transition-all cursor-pointer"
+                          >
+                            Cancel
+                          </button>
+                          
+                          <button
+                            type="button"
+                            onClick={async () => {
+                              const targetId = Number(selectedDealProductId);
+                              const targetCrop = products.find(p => p.id === targetId);
+                              if (!targetCrop) return;
+
+                              const payload = {
+                                name: targetCrop.name,
+                                description: targetCrop.description,
+                                price: targetCrop.price,
+                                stock: targetCrop.stock,
+                                category: targetCrop.category,
+                                image_url: targetCrop.image_url,
+                                discount_percent: Number(dealDiscountPercent)
+                              };
+
+                              try {
+                                const res = await fetch(`${API_BASE_URL}/api/products/${targetId}`, {
+                                  method: 'PUT',
+                                  headers: {
+                                    'Content-Type': 'application/json',
+                                    'Authorization': `Bearer ${token}`
+                                  },
+                                  body: JSON.stringify(payload)
+                                });
+                                if (!res.ok) throw new Error("Failed to create discount.");
+                                showToast(`Flash sale created for ${targetCrop.name}!`, "success");
+                                setCreateDealModalOpen(false);
+                                fetchData();
+                              } catch (e: any) {
+                                showToast(e.message || "Failed to create deal.", "error");
+                              }
+                            }}
+                            className="flex-1 rounded-2xl bg-amber-500 hover:bg-amber-600 text-slate-950 py-3 text-xs font-black shadow-md active:scale-95 transition-all cursor-pointer"
+                          >
+                            Create Deal ⚡
+                          </button>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 )}
               </div>
