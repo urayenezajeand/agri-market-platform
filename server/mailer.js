@@ -31,15 +31,15 @@ export async function sendOtpEmail(toEmail, userName, otpCode) {
             
             <hr style="border: 0; border-top: 1px solid #f3f4f6; margin-bottom: 25px;">
             
-            <p style="font-size: 15px; line-height: 1.6; color: #4b5563;">Muraho <strong>${userName}</strong>,</p>
-            <p style="font-size: 15px; line-height: 1.6; color: #4b5563;">Mwasabye guhindura ijambo ry'ibanga rya konti yanyu. Nyamuneka koresha uyu mubare w'ibanga w'agateganyo (OTP code) ugenewe imiziririzo yawe:</p>
+            <p style="font-size: 15px; line-height: 1.6; color: #4b5563;">Hello <strong>${userName}</strong>,</p>
+            <p style="font-size: 15px; line-height: 1.6; color: #4b5563;">Please use the following One-Time Password (OTP) verification code to log in to your account:</p>
             
             <div style="text-align: center; margin: 30px 0;">
                 <span style="display: inline-block; background-color: #f0fdf4; border: 2px dashed #10b981; border-radius: 15px; padding: 12px 30px; font-size: 28px; font-weight: 900; letter-spacing: 8px; color: #065f46; font-family: monospace;">${otpCode}</span>
-                <p style="color: #9ca3af; font-size: 11px; margin-top: 10px;">Iri jambo ry'agateganyo rirangiza igihe mu minota 5 (Expires in 5 minutes)</p>
+                <p style="color: #9ca3af; font-size: 11px; margin-top: 10px;">This code is valid for 5 minutes.</p>
             </div>
             
-            <p style="font-size: 13px; line-height: 1.5; color: #6b7280;">Niba atari mwe mwasabye iri hinduka, nyamuneka mwirengagize iyi baruwa, konti yanyu iracyari mu mutekano.</p>
+            <p style="font-size: 13px; line-height: 1.5; color: #6b7280;">If you did not request this code, please ignore this email. Your account security is safe.</p>
             
             <hr style="border: 0; border-top: 1px solid #f3f4f6; margin: 25px 0;">
             
@@ -66,7 +66,7 @@ export async function sendOtpEmail(toEmail, userName, otpCode) {
                 body: JSON.stringify({
                     sender: { name: 'AgriMarket Security', email: senderEmail },
                     to: [{ email: toEmail, name: userName }],
-                    subject: `[AgriMarket] OTP Code: ${otpCode} - Hindura Ijambo ry'ibanga`,
+                    subject: `[AgriMarket] Login Verification OTP: ${otpCode}`,
                     htmlContent: htmlContent
                 })
             });
@@ -97,7 +97,7 @@ export async function sendOtpEmail(toEmail, userName, otpCode) {
     const mailOptions = {
         from: `"AgriMarket Security" <${fromEmail}>`,
         to: toEmail,
-        subject: `[AgriMarket] OTP Code: ${otpCode} - Hindura Ijambo ry'ibanga`,
+        subject: `[AgriMarket] Login Verification OTP: ${otpCode}`,
         html: htmlContent
     };
 
@@ -132,8 +132,8 @@ export async function sendOrderReceiptEmail(toEmail, userName, orderId, totalAmo
             
             <hr style="border: 0; border-top: 1px solid #f3f4f6; margin-bottom: 25px;">
             
-            <p style="font-size: 15px; line-height: 1.6; color: #4b5563;">Murakoze cyane <strong>${userName}</strong> ku bwo guhaha muri AgriMarket!</p>
-            <p style="font-size: 14px; line-height: 1.6; color: #6b7280; margin-bottom: 20px;">Twamaze kwakira no kwemeza ibyo watumije. Hano hari inyemezabwishyu (receipt) y'ibyo waguze:</p>
+            <p style="font-size: 15px; line-height: 1.6; color: #4b5563;">Thank you for shopping at AgriMarket, <strong>${userName}</strong>!</p>
+            <p style="font-size: 14px; line-height: 1.6; color: #6b7280; margin-bottom: 20px;">We have received your order. Here is your receipt containing purchase details:</p>
             
             <div style="background-color: #f9fafb; border-radius: 16px; padding: 20px; margin-bottom: 25px; border: 1px solid #f3f4f6;">
                 <p style="margin: 0 0 8px 0; font-size: 13px; color: #4b5563;"><strong>Order Number:</strong> #${orderId}</p>
@@ -171,7 +171,7 @@ export async function sendOrderReceiptEmail(toEmail, userName, orderId, totalAmo
                 </div>
             </div>
             
-            <p style="font-size: 13px; line-height: 1.5; color: #6b7280; text-align: center;">Umucuruzi agiye gutangira gutunganya no kohereza ibyo watumije vuba bishoboka.</p>
+            <p style="font-size: 13px; line-height: 1.5; color: #6b7280; text-align: center;">The seller will process and ship your items shortly.</p>
             
             <hr style="border: 0; border-top: 1px solid #f3f4f6; margin: 25px 0;">
             
