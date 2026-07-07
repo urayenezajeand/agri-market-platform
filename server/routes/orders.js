@@ -1,6 +1,7 @@
 import express from 'express';
 import pool from '../db.js';
 import { authenticateToken } from '../middleware/auth.js';
+import { sendOrderReceiptEmail } from '../mailer.js';
 
 const router = express.Router();
 
@@ -21,6 +22,7 @@ router.post('/', authenticateToken, async (req, res) => {
         await client.query('BEGIN');
 
         let totalAmount = 0;
+        const itemsDetailed = [];
 
         // B. Kubika ibiranga order muri table ya 'orders' (ibanza kuba total = 0)
         const orderResult = await client.query(
@@ -50,6 +52,8 @@ router.post('/', authenticateToken, async (req, res) => {
             const itemTotal = parseFloat(price) * quantity;
             totalAmount += itemTotal;
 
+            itemsDetailed.push({ name: productName, price: parseFloat(price), quantity });
+
             // 4. Kugabanya stock muri database (Reduce product stock)
             await client.query(
                 'UPDATE products SET stock = stock - $1 WHERE id = $2',
@@ -71,6 +75,14 @@ router.post('/', authenticateToken, async (req, res) => {
 
         // E. Kwemeza TRANSACTION (Commit transaction)
         await client.query('COMMIT');
+
+        // F. Yohereza inyemezabwishyu (Send order confirmation receipt email asynchronously)
+        const userRes = await client.query('SELECT name, email FROM users WHERE id = $1', [buyer_id]);
+        if (userRes.rows.length > 0) {
+            const { name: buyerName, email: buyerEmail } = userRes.rows[0];
+            sendOrderReceiptEmail(buyerEmail, buyerName, orderId, totalAmount, shipping_address, phone, itemsDetailed)
+                .catch(err => console.error('[EMAIL ERROR] Failed to send async order receipt email:', err));
+        }
 
         res.status(201).json({ id: orderId, total_amount: totalAmount, message: 'Ibyo watumije byakirwe neza (Order placed successfully)' });
 
