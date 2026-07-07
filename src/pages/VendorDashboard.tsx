@@ -899,7 +899,7 @@ export default function VendorDashboard() {
                                 step="5"
                                 value={currentDiscount}
                                 onChange={(e) => setPendingDiscounts(prev => ({ ...prev, [p.id]: Number(e.target.value) }))}
-                                className="w-full accent-amber-500 h-1.5 bg-slate-100 rounded-lg appearance-none cursor-pointer"
+                                className="w-full accent-amber-500 h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer [&::-webkit-slider-runnable-track]:bg-slate-200 [&::-webkit-slider-runnable-track]:h-1.5 [&::-webkit-slider-runnable-track]:rounded-lg [&::-moz-range-track]:bg-slate-200 [&::-moz-range-track]:h-1.5 [&::-moz-range-track]:rounded-lg"
                               />
                               <div className="flex justify-between text-[9px] text-slate-400 font-bold">
                                 <span>5% Min</span>
@@ -974,7 +974,7 @@ export default function VendorDashboard() {
                             step="5"
                             value={dealDiscountPercent}
                             onChange={(e) => setDealDiscountPercent(e.target.value)}
-                            className="w-full accent-amber-500 h-1.5 bg-slate-100 rounded-lg appearance-none cursor-pointer"
+                            className="w-full accent-amber-500 h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer [&::-webkit-slider-runnable-track]:bg-slate-200 [&::-webkit-slider-runnable-track]:h-1.5 [&::-webkit-slider-runnable-track]:rounded-lg [&::-moz-range-track]:bg-slate-200 [&::-moz-range-track]:h-1.5 [&::-moz-range-track]:rounded-lg"
                           />
                           <div className="flex justify-between text-[9px] text-slate-400 font-bold">
                             <span>5% Min</span>
