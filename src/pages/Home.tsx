@@ -88,7 +88,7 @@ export default function Home() {
       badge: "Top Seller",
       specialty: "Kinigi Potatoes & Organic Tomatoes",
       bio: "Kamana has been farming in the fertile volcanic soil of Musanze for 15 years, supplying high-quality organic crops.",
-      image: "https://images.unsplash.com/photo-1595273670150-db0a3e39843c?w=450&auto=format&fit=crop&q=80",
+      image: "https://images.unsplash.com/photo-1560493676-04071c5f467b?w=450&auto=format&fit=crop&q=80",
       rating: "4.9",
     },
     {
@@ -98,7 +98,7 @@ export default function Home() {
       badge: "Certified Expert",
       specialty: "Hybrid Maize & Grains",
       bio: "Dr. Agnes collaborates with Rwanda Agriculture Board to grow drought-resistant grains using modern organic practices.",
-      image: "https://images.unsplash.com/photo-1592924357228-91a4daadcfea?w=450&auto=format&fit=crop&q=80",
+      image: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=450&auto=format&fit=crop&q=80",
       rating: "4.8",
     },
     {
@@ -108,7 +108,7 @@ export default function Home() {
       badge: "Organic Certified",
       specialty: "Sweet Bananas & Mangoes",
       bio: "Mama Keza runs a community cooperative of women farmers in Huye, specializing in pesticide-free tropical fruits.",
-      image: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=450&auto=format&fit=crop&q=80",
+      image: "https://images.unsplash.com/photo-1531123897727-8f129e1688ce?w=450&auto=format&fit=crop&q=80",
       rating: "4.9",
     },
     {
@@ -738,11 +738,15 @@ export default function Home() {
             <div className="absolute bottom-0 left-0 w-48 h-48 bg-teal-500/5 rounded-full blur-3xl"></div>
             
             {/* Farmer Photo Overlay details */}
-            <div className="w-full md:w-1/3 relative h-64 md:h-72 rounded-2xl overflow-hidden shadow-md group">
+            <div className="w-full md:w-1/3 relative h-64 md:h-72 rounded-2xl overflow-hidden shadow-md group bg-emerald-50/40 border border-slate-100 flex items-center justify-center">
+              {/* Fallback avatar visual */}
+              <span className="text-7xl select-none absolute">🧑‍🌾</span>
+              
               <img
                 src={partneredFarmers[farmerIndex].image}
                 alt={partneredFarmers[farmerIndex].name}
-                className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105 absolute inset-0"
               />
               {/* Badge Overlay */}
               <div className="absolute top-4 left-4 bg-stone-900/80 backdrop-blur-sm text-white text-[9px] font-black uppercase tracking-wider px-3 py-1 rounded-full shadow-sm">
