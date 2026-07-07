@@ -57,6 +57,9 @@ export default function VendorDashboard() {
   const [reportPeriod, setReportPeriod] = useState<'all' | 'daily' | 'weekly' | 'monthly' | 'custom'>('all');
   const [customStartDate, setCustomStartDate] = useState('');
   const [customEndDate, setCustomEndDate] = useState('');
+  // Order Details inspector modal state
+  const [viewingOrder, setViewingOrder] = useState<any | null>(null);
+  const [orderDetailsModalOpen, setOrderDetailsModalOpen] = useState(false);
 
   // Create / Edit modal state
   const [modalOpen, setModalOpen] = useState(false);
@@ -971,10 +974,9 @@ export default function VendorDashboard() {
                 )}
               </div>
             )}
-
-            {/* CUSTOMER ORDERS TAB PANEL */}
             {activeTab === 'orders' && (
-              <div className="space-y-4">
+              <div className="space-y-6">
+                
                 {sales.length === 0 ? (
                   <div className="bg-white rounded-3xl p-16 border border-slate-100 shadow-sm text-center">
                     <span className="text-5xl block mb-4">📦</span>
@@ -984,77 +986,164 @@ export default function VendorDashboard() {
                     </p>
                   </div>
                 ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {sales.map((sale) => (
-                      <div
-                        key={sale.id}
-                        className="bg-white rounded-3xl border border-slate-100 shadow-sm p-6 space-y-4 flex flex-col justify-between"
-                      >
-                        <div className="space-y-3.5">
-                          {/* Order ID & Status */}
-                          <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-                            <div>
-                              <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block">Order ID</span>
-                              <span className="text-xs font-black text-slate-800">#{sale.order_id}</span>
-                            </div>
-                            
-                            <span
-                              className={`text-[9px] uppercase font-black tracking-wider px-3 py-1 rounded-full ${
-                                sale.status === 'delivered'
-                                  ? 'bg-emerald-100 text-emerald-800 border border-emerald-200'
-                                  : sale.status === 'shipped'
-                                  ? 'bg-blue-100 text-blue-800 border border-blue-200'
-                                  : sale.status === 'cancelled'
-                                  ? 'bg-rose-100 text-rose-800 border border-rose-200'
-                                  : 'bg-orange-100 text-orange-850 border border-orange-200'
-                              }`}
-                            >
-                              {sale.status}
-                            </span>
-                          </div>
+                  <div className="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden">
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-left border-collapse text-xs font-semibold text-slate-650">
+                        <thead>
+                          <tr className="bg-slate-50 border-b border-slate-100 text-[10px] text-slate-400 font-black uppercase tracking-wider">
+                            <th className="p-5">Order ID</th>
+                            <th className="p-5">Order Date</th>
+                            <th className="p-5">Customer</th>
+                            <th className="p-5">Crop Name</th>
+                            <th className="p-5 text-right">Qty</th>
+                            <th className="p-5 text-right">Earning</th>
+                            <th className="p-5 text-center">Status</th>
+                            <th className="p-5 text-right">Action</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-50">
+                          {sales.map((sale) => (
+                            <tr key={sale.id} className="hover:bg-slate-50/50 transition-colors">
+                              <td className="p-5 font-black text-slate-900">#{sale.order_id}</td>
+                              <td className="p-5 text-slate-600">{new Date(sale.created_at).toLocaleDateString()}</td>
+                              <td className="p-5">
+                                <div className="space-y-0.5">
+                                  <span className="font-extrabold text-slate-900 block">{sale.buyer_name}</span>
+                                  <span className="text-[10px] text-slate-400">{sale.phone}</span>
+                                </div>
+                              </td>
+                              <td className="p-5 font-extrabold text-slate-900">{sale.product_name}</td>
+                              <td className="p-5 text-right text-slate-700">{sale.quantity} units</td>
+                              <td className="p-5 text-right text-emerald-600 font-black">
+                                {(Number(sale.price) * sale.quantity).toLocaleString()} RWF
+                              </td>
+                              <td className="p-5 text-center">
+                                <span
+                                  className={`inline-block text-[9px] uppercase font-black tracking-wider px-2.5 py-1 rounded-full ${
+                                    sale.status === 'delivered'
+                                      ? 'bg-emerald-50 text-emerald-800 border border-emerald-100'
+                                      : sale.status === 'shipped'
+                                      ? 'bg-blue-50 text-blue-800 border border-blue-100'
+                                      : sale.status === 'cancelled'
+                                      ? 'bg-rose-50 text-rose-800 border border-rose-100'
+                                      : 'bg-orange-50 text-orange-850 border border-orange-100'
+                                  }`}
+                                >
+                                  {sale.status}
+                                </span>
+                              </td>
+                              <td className="p-5 text-right">
+                                <button
+                                  onClick={() => {
+                                    setViewingOrder(sale);
+                                    setOrderDetailsModalOpen(true);
+                                  }}
+                                  className="text-xs font-bold text-emerald-600 hover:text-emerald-700 bg-emerald-50 hover:bg-emerald-100 px-3.5 py-1.5 rounded-xl border border-emerald-100 transition-all cursor-pointer"
+                                >
+                                  View Details
+                                </button>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                )}
 
-                          {/* Details details */}
-                          <div className="grid grid-cols-2 gap-4 text-xs font-semibold text-slate-650">
-                            <div>
-                              <span className="text-[9px] text-slate-400 uppercase tracking-wide block mb-0.5">Crop Item</span>
-                              <span className="text-slate-900 font-extrabold">{sale.product_name}</span>
-                            </div>
-                            <div>
-                              <span className="text-[9px] text-slate-400 uppercase tracking-wide block mb-0.5">Quantity</span>
-                              <span className="text-slate-900 font-extrabold">{sale.quantity} units</span>
-                            </div>
-                            <div>
-                              <span className="text-[9px] text-slate-400 uppercase tracking-wide block mb-0.5">Earning</span>
-                              <span className="text-emerald-600 font-black">{(Number(sale.price) * sale.quantity).toLocaleString()} RWF</span>
-                            </div>
-                            <div>
-                              <span className="text-[9px] text-slate-400 uppercase tracking-wide block mb-0.5">Order Date</span>
-                              <span className="text-slate-900 font-bold">{new Date(sale.created_at).toLocaleDateString()}</span>
-                            </div>
-                          </div>
+                {/* 3. Detailed Order Inspector Modal */}
+                {orderDetailsModalOpen && viewingOrder && (
+                  <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+                    <div className="relative w-full max-w-md bg-white rounded-3xl shadow-xl p-6 sm:p-8 space-y-6 border border-slate-100">
+                      
+                      {/* Modal Header */}
+                      <div className="flex items-center justify-between border-b border-slate-50 pb-4">
+                        <div>
+                          <h3 className="text-lg font-black text-slate-900 tracking-tight leading-tight">Order Details</h3>
+                          <p className="text-[10px] text-slate-400 font-extrabold uppercase mt-1">Order Ref: #{viewingOrder.order_id}</p>
+                        </div>
+                        <span
+                          className={`text-[9px] uppercase font-black tracking-wider px-3 py-1 rounded-full ${
+                            viewingOrder.status === 'delivered'
+                              ? 'bg-emerald-50 text-emerald-800 border border-emerald-100'
+                              : viewingOrder.status === 'shipped'
+                              ? 'bg-blue-50 text-blue-800 border border-blue-100'
+                              : viewingOrder.status === 'cancelled'
+                              ? 'bg-rose-50 text-rose-800 border border-rose-100'
+                              : 'bg-orange-50 text-orange-850 border border-orange-100'
+                          }`}
+                        >
+                          {viewingOrder.status}
+                        </span>
+                      </div>
 
-                          {/* Buyer info box */}
-                          <div className="bg-slate-50/50 rounded-2xl p-4 border border-slate-100 text-xs font-semibold text-slate-655 space-y-1">
-                            <p className="truncate"><span className="text-slate-400">Buyer:</span> {sale.buyer_name} ({sale.buyer_email})</p>
-                            <p><span className="text-slate-400">Phone:</span> {sale.phone}</p>
-                            <p className="truncate"><span className="text-slate-400">Shipping:</span> {sale.shipping_address}</p>
+                      {/* Modal Body Contents */}
+                      <div className="space-y-5">
+                        
+                        {/* Summary Section */}
+                        <div className="grid grid-cols-2 gap-4 text-xs font-semibold text-slate-650">
+                          <div>
+                            <span className="text-[9px] text-slate-400 uppercase tracking-wide block mb-0.5 font-bold">Crop Item</span>
+                            <span className="text-slate-900 font-extrabold">{viewingOrder.product_name}</span>
+                          </div>
+                          <div>
+                            <span className="text-[9px] text-slate-400 uppercase tracking-wide block mb-0.5 font-bold">Quantity</span>
+                            <span className="text-slate-900 font-extrabold">{viewingOrder.quantity} units</span>
+                          </div>
+                          <div>
+                            <span className="text-[9px] text-slate-400 uppercase tracking-wide block mb-0.5 font-bold">Earning</span>
+                            <span className="text-emerald-600 font-black">{(Number(viewingOrder.price) * viewingOrder.quantity).toLocaleString()} RWF</span>
+                          </div>
+                          <div>
+                            <span className="text-[9px] text-slate-400 uppercase tracking-wide block mb-0.5 font-bold">Order Date</span>
+                            <span className="text-slate-900 font-bold">{new Date(viewingOrder.created_at).toLocaleDateString()}</span>
                           </div>
                         </div>
 
-                        {/* Status updates button */}
-                        {sale.status !== 'delivered' && sale.status !== 'cancelled' && (
-                          <div className="pt-2 flex justify-end">
-                            <button
-                              onClick={() => handleUpdateOrderStatus(sale.order_id, sale.status)}
-                              className="text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 px-5 py-2.5 rounded-xl transition-all hover:scale-[1.03] active:scale-[0.97] shadow shadow-emerald-600/10 cursor-pointer"
-                            >
-                              {sale.status === 'pending' && 'Mark as Shipped 🚚'}
-                              {sale.status === 'shipped' && 'Mark as Delivered / Completed ✓'}
-                            </button>
-                          </div>
+                        {/* Customer profile container */}
+                        <div className="bg-slate-50/70 rounded-2xl p-4.5 border border-slate-100 text-xs font-semibold text-slate-655 space-y-2">
+                          <h4 className="text-[9px] font-black text-slate-400 uppercase tracking-wider mb-2 border-b border-slate-100/50 pb-1">
+                            Delivery & Customer Contact Information
+                          </h4>
+                          <p><span className="text-slate-400 font-bold">Buyer:</span> {viewingOrder.buyer_name} ({viewingOrder.buyer_email})</p>
+                          <p><span className="text-slate-400 font-bold">Phone Number:</span> {viewingOrder.phone}</p>
+                          <p className="leading-relaxed"><span className="text-slate-400 font-bold">Shipping Address:</span> {viewingOrder.shipping_address}</p>
+                        </div>
+                      </div>
+
+                      {/* Modal Footer Controls */}
+                      <div className="flex space-x-3 pt-2 border-t border-slate-50">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setViewingOrder(null);
+                            setOrderDetailsModalOpen(false);
+                          }}
+                          className="flex-1 rounded-2xl border border-slate-200 py-3 text-xs font-bold text-slate-500 hover:bg-slate-50 active:scale-95 transition-all cursor-pointer text-center"
+                        >
+                          Close Details
+                        </button>
+
+                        {viewingOrder.status !== 'delivered' && viewingOrder.status !== 'cancelled' && (
+                          <button
+                            type="button"
+                            onClick={async () => {
+                              await handleUpdateOrderStatus(viewingOrder.order_id, viewingOrder.status);
+                              // Sync local status in open modal
+                              setViewingOrder((prev: any) => {
+                                if (!prev) return null;
+                                const nextStat = prev.status === 'pending' ? 'shipped' : 'delivered';
+                                return { ...prev, status: nextStat };
+                              });
+                            }}
+                            className="flex-1 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white py-3 text-xs font-black shadow-md active:scale-95 transition-all cursor-pointer text-center"
+                          >
+                            {viewingOrder.status === 'pending' && 'Mark as Shipped 🚚'}
+                            {viewingOrder.status === 'shipped' && 'Mark as Delivered ✓'}
+                          </button>
                         )}
                       </div>
-                    ))}
+                    </div>
                   </div>
                 )}
               </div>
