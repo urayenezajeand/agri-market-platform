@@ -26,9 +26,19 @@ export default function Login() {
   
   const [searchParams] = useSearchParams();
 
-  const { login } = useAuth();
+  const { login, isAuthenticated, user } = useAuth();
   const { showToast } = useToast();
   const navigate = useNavigate();
+
+  React.useEffect(() => {
+    if (isAuthenticated) {
+      if (user?.role === 'vendor') {
+        navigate('/vendor/dashboard');
+      } else {
+        navigate('/');
+      }
+    }
+  }, [isAuthenticated, user, navigate]);
 
   React.useEffect(() => {
     if (searchParams.get('action') === 'google') {
