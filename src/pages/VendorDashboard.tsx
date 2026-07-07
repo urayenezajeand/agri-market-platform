@@ -53,6 +53,11 @@ export default function VendorDashboard() {
   const [selectedDealProductId, setSelectedDealProductId] = useState('');
   const [dealDiscountPercent, setDealDiscountPercent] = useState('10');
 
+  // Report Period filters state
+  const [reportPeriod, setReportPeriod] = useState<'all' | 'daily' | 'weekly' | 'monthly' | 'custom'>('all');
+  const [customStartDate, setCustomStartDate] = useState('');
+  const [customEndDate, setCustomEndDate] = useState('');
+
   // Create / Edit modal state
   const [modalOpen, setModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
@@ -239,14 +244,74 @@ export default function VendorDashboard() {
     }
   };
 
+  // Filter sales list based on selected time window
+  const getFilteredSales = () => {
+    const now = new Date();
+    
+    const getStartOfDay = (d: Date) => {
+      const date = new Date(d);
+      date.setHours(0, 0, 0, 0);
+      return date;
+    };
+
+    return sales.filter(s => {
+      const orderDate = new Date(s.created_at);
+      
+      switch (reportPeriod) {
+        case 'daily': {
+          const today = getStartOfDay(now);
+          return orderDate >= today;
+        }
+        case 'weekly': {
+          const sevenDaysAgo = new Date(now);
+          sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+          return orderDate >= getStartOfDay(sevenDaysAgo);
+        }
+        case 'monthly': {
+          const thirtyDaysAgo = new Date(now);
+          thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+          return orderDate >= getStartOfDay(thirtyDaysAgo);
+        }
+        case 'custom': {
+          if (!customStartDate && !customEndDate) return true;
+          let match = true;
+          if (customStartDate) {
+            const start = getStartOfDay(new Date(customStartDate));
+            match = match && (orderDate >= start);
+          }
+          if (customEndDate) {
+            const end = new Date(customEndDate);
+            end.setHours(23, 59, 59, 999);
+            match = match && (orderDate <= end);
+          }
+          return match;
+        }
+        default:
+          return true; // 'all'
+      }
+    });
+  };
+
   // Calculate Overview Stats
   const activeListingsCount = products.length;
-  const totalOrdersCount = Array.from(new Set(sales.map(s => s.order_id))).length;
+  const filteredSales = getFilteredSales();
+  const totalOrdersCount = Array.from(new Set(filteredSales.map(s => s.order_id))).length;
   
-  // Total earnings = Sum of item subtotals for all non-cancelled orders
-  const totalEarnings = sales
+  // Total earnings = Sum of item subtotals for all non-cancelled orders in range
+  const totalEarnings = filteredSales
     .filter(s => s.status !== 'cancelled')
     .reduce((sum, item) => sum + (Number(item.price) * item.quantity), 0);
+
+  // Get descriptive label for the report scope
+  const getReportPeriodLabel = () => {
+    switch (reportPeriod) {
+      case 'daily': return 'Daily (Today)';
+      case 'weekly': return 'Weekly (Last 7 Days)';
+      case 'monthly': return 'Monthly (Last 30 Days)';
+      case 'custom': return `Custom Range (${customStartDate || 'Start'} to ${customEndDate || 'End'})`;
+      default: return 'All-Time History';
+    }
+  };
 
   // Generate dynamic client-side PDF audit report
   const generatePdfReport = () => {
@@ -396,6 +461,7 @@ export default function VendorDashboard() {
               <div><strong>Generated On:</strong> ${new Date().toLocaleString()}</div>
               <div><strong>Vendor Account:</strong> Farmer ${user?.name || 'Rwandan Farmer'}</div>
               <div><strong>Email Address:</strong> ${user?.email || 'No email'}</div>
+              <div><strong>Report Scope:</strong> ${getReportPeriodLabel()}</div>
             </div>
           </div>
 
@@ -454,7 +520,7 @@ export default function VendorDashboard() {
               </tr>
             </thead>
             <tbody>
-              ${sales.map(s => `
+              ${filteredSales.map(s => `
                 <tr>
                   <td>#${s.order_id}</td>
                   <td><strong>${s.product_name}</strong></td>
@@ -1279,6 +1345,64 @@ export default function VendorDashboard() {
                       </button>
                     </div>
                   </div>
+                </div>
+
+                {/* Dynamic Time Range Filter Selection Panel */}
+                <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm space-y-4">
+                  <div>
+                    <h4 className="text-xs font-black text-slate-800 uppercase tracking-widest border-b border-slate-50 pb-3">
+                      Select Report Timeframe
+                    </h4>
+                  </div>
+                  
+                  <div className="flex flex-wrap gap-2">
+                    {[
+                      { key: 'all', label: 'All-Time History' },
+                      { key: 'daily', label: 'Daily (Today)' },
+                      { key: 'weekly', label: 'Weekly (Last 7 Days)' },
+                      { key: 'monthly', label: 'Monthly (Last 30 Days)' },
+                      { key: 'custom', label: 'Custom Range' },
+                    ].map((item) => (
+                      <button
+                        key={item.key}
+                        onClick={() => setReportPeriod(item.key as any)}
+                        className={`text-xs font-extrabold px-4.5 py-2.5 rounded-xl border transition-all active:scale-95 cursor-pointer ${
+                          reportPeriod === item.key
+                            ? 'bg-emerald-600 border-emerald-600 text-white shadow-md shadow-emerald-600/10'
+                            : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100 hover:text-slate-900'
+                        }`}
+                      >
+                        {item.label}
+                      </button>
+                    ))}
+                  </div>
+
+                  {reportPeriod === 'custom' && (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4.5 bg-slate-50/70 rounded-2xl border border-slate-100">
+                      <div>
+                        <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5 pl-1">
+                          Start Date
+                        </label>
+                        <input
+                          type="date"
+                          value={customStartDate}
+                          onChange={(e) => setCustomStartDate(e.target.value)}
+                          className="block w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-slate-900 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/10 text-xs font-semibold"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5 pl-1">
+                          End Date
+                        </label>
+                        <input
+                          type="date"
+                          value={customEndDate}
+                          onChange={(e) => setCustomEndDate(e.target.value)}
+                          className="block w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-slate-900 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/10 text-xs font-semibold"
+                        />
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 {/* Audit summaries cards */}
