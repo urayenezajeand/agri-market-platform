@@ -808,15 +808,17 @@ export default function VendorDashboard() {
                           {chartData.map((d, index) => {
                             const percent = (d.amount / maxSaleAmount) * 100;
                             return (
-                              <div key={index} className="flex-1 flex flex-col items-center space-y-2 group">
-                                <div className="text-[9px] font-black text-emerald-600 opacity-0 group-hover:opacity-100 transition-opacity bg-emerald-50 px-1 rounded">
+                              <div key={index} className="flex-1 flex flex-col items-center group">
+                                <div className="text-[9px] font-black text-emerald-650 opacity-0 group-hover:opacity-100 transition-opacity bg-emerald-50 px-1.5 py-0.5 rounded mb-1">
                                   {d.amount.toLocaleString()} RWF
                                 </div>
-                                <div 
-                                  style={{ height: `${Math.max(percent, 8)}%` }}
-                                  className="w-full bg-emerald-500 rounded-lg hover:bg-emerald-600 transition-all duration-300 cursor-pointer shadow-sm relative"
-                                ></div>
-                                <span className="text-[9px] font-bold text-slate-400 truncate max-w-[60px]">
+                                <div className="w-full h-28 flex items-end">
+                                  <div 
+                                    style={{ height: `${Math.max(percent, 8)}%` }}
+                                    className="w-full bg-emerald-500 rounded-lg hover:bg-emerald-655 transition-all duration-300 cursor-pointer shadow-sm relative"
+                                  ></div>
+                                </div>
+                                <span className="text-[9px] font-bold text-slate-400 truncate max-w-[60px] mt-2">
                                   {d.date}
                                 </span>
                               </div>
