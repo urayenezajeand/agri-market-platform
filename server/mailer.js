@@ -66,7 +66,7 @@ export async function sendOtpEmail(toEmail, userName, otpCode) {
                 body: JSON.stringify({
                     sender: { name: 'AgriMarket Security', email: senderEmail },
                     to: [{ email: toEmail, name: userName }],
-                    subject: `[AgriMarket] Login Verification OTP: ${otpCode}`,
+                    subject: `Login Verification OTP: ${otpCode}`,
                     htmlContent: htmlContent
                 })
             });
@@ -97,7 +97,7 @@ export async function sendOtpEmail(toEmail, userName, otpCode) {
     const mailOptions = {
         from: `"AgriMarket Security" <${fromEmail}>`,
         to: toEmail,
-        subject: `[AgriMarket] Login Verification OTP: ${otpCode}`,
+        subject: `Login Verification OTP: ${otpCode}`,
         html: htmlContent
     };
 
@@ -198,7 +198,7 @@ export async function sendOrderReceiptEmail(toEmail, userName, orderId, totalAmo
                 body: JSON.stringify({
                     sender: { name: 'AgriMarket Orders', email: senderEmail },
                     to: [{ email: toEmail, name: userName }],
-                    subject: `[AgriMarket] Receipt: Order #${orderId} Confirmed`,
+                    subject: `Receipt: Order #${orderId} Confirmed`,
                     htmlContent: htmlContent
                 })
             });
@@ -230,7 +230,7 @@ export async function sendOrderReceiptEmail(toEmail, userName, orderId, totalAmo
     const mailOptions = {
         from: `"AgriMarket Orders" <${fromEmail}>`,
         to: toEmail,
-        subject: `[AgriMarket] Receipt: Order #${orderId} Confirmed`,
+        subject: `Receipt: Order #${orderId} Confirmed`,
         html: htmlContent
     };
 
