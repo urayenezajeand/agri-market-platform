@@ -54,7 +54,7 @@ export async function sendOtpEmail(toEmail, userName, otpCode) {
     if (process.env.BREVO_API_KEY) {
         try {
             console.log(`[BREVO API] Attempting to send email via Brevo HTTP API to ${toEmail}...`);
-            const senderEmail = process.env.SMTP_USER || 'urayenezajeand@gmail.com';
+            const senderEmail = fromEmail;
             
             const response = await fetch('https://api.brevo.com/v3/smtp/email', {
                 method: 'POST',
@@ -186,7 +186,7 @@ export async function sendOrderReceiptEmail(toEmail, userName, orderId, totalAmo
     if (process.env.BREVO_API_KEY) {
         try {
             console.log(`[BREVO API] Attempting to send order receipt email to ${toEmail}...`);
-            const senderEmail = process.env.SMTP_USER || 'urayenezajeand@gmail.com';
+            const senderEmail = fromEmail;
             
             const response = await fetch('https://api.brevo.com/v3/smtp/email', {
                 method: 'POST',
