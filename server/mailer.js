@@ -15,6 +15,8 @@ const transporter = nodemailer.createTransport({
     }
 });
 
+const fromEmail = process.env.SMTP_FROM || 'urayenezajeand@gmail.com';
+
 /**
  * Sends a stylized HTML email with the 6-digit OTP code to the user.
  * Falls back safely to terminal logging if SMTP credentials are missing.
@@ -93,7 +95,7 @@ export async function sendOtpEmail(toEmail, userName, otpCode) {
     }
 
     const mailOptions = {
-        from: `"AgriMarket Security" <${process.env.SMTP_USER}>`,
+        from: `"AgriMarket Security" <${fromEmail}>`,
         to: toEmail,
         subject: `[AgriMarket] OTP Code: ${otpCode} - Hindura Ijambo ry'ibanga`,
         html: htmlContent
@@ -226,7 +228,7 @@ export async function sendOrderReceiptEmail(toEmail, userName, orderId, totalAmo
     }
 
     const mailOptions = {
-        from: `"AgriMarket Orders" <${process.env.SMTP_USER}>`,
+        from: `"AgriMarket Orders" <${fromEmail}>`,
         to: toEmail,
         subject: `[AgriMarket] Receipt: Order #${orderId} Confirmed`,
         html: htmlContent
