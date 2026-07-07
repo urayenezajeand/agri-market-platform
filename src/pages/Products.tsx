@@ -14,6 +14,7 @@ interface Product {
   image_url?: string;
   vendor_id: number;
   rating?: number;
+  vendor_name?: string;
 }
 
 export default function Products() {
@@ -82,7 +83,8 @@ export default function Products() {
       result = result.filter(p => 
         p.name.toLowerCase().includes(q) || 
         p.description.toLowerCase().includes(q) ||
-        p.category.toLowerCase().includes(q)
+        p.category.toLowerCase().includes(q) ||
+        (p.vendor_name && p.vendor_name.toLowerCase().includes(q))
       );
     }
 
@@ -323,10 +325,15 @@ export default function Products() {
                       {/* Content summary */}
                       <div className="p-4.5 space-y-2.5">
                         <div>
-                          <h3 className="text-xs font-black text-slate-900 group-hover:text-emerald-700 transition-colors leading-snug">
+                          <h3 className="text-xs font-black text-slate-900 group-hover:text-emerald-700 transition-colors leading-snug truncate">
                             {p.name}
                           </h3>
-                          <div className="flex items-center space-x-1.5 mt-1 text-[10px] text-amber-500 font-bold">
+                          {/* Seller Badge */}
+                          <div className="flex items-center space-x-1.5 mt-1 text-[10px] text-slate-500 font-semibold">
+                            <span className="text-emerald-600 text-xs">🧑‍🌾</span>
+                            <span className="truncate">{p.vendor_name || 'Rwandan Farmer'}</span>
+                          </div>
+                          <div className="flex items-center space-x-1.5 mt-1.5 text-[10px] text-amber-500 font-bold">
                             <span>★</span>
                             <span>{p.rating}</span>
                             <span className="text-slate-400 font-semibold">({p.id * 13 + 5} reviews)</span>

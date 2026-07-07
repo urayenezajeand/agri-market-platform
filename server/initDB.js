@@ -31,7 +31,7 @@ export async function initializeDatabase() {
     
     if (userCheck.rows.length === 0) {
       // Default password hash for 'password123'
-      const passwordHash = '$2a$10$Rz/6h7sP6d/b9L9h4eH/Ie/4c4.W3jXjR5UqO/Cj/2l/8k7v4/7.S';
+      const passwordHash = '$2a$10$UeRSy8Sfs68nOuhhRYyjSekMRmIir41IZZVjMMj9/4Mq/Wf7iKNdO';
       const vendorResult = await pool.query(
         "INSERT INTO users (name, email, password_hash, role) VALUES ($1, $2, $3, $4) RETURNING id",
         ['Farmer Kamana', 'kamana@agrimarket.rw', passwordHash, 'vendor']

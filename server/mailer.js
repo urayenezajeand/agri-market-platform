@@ -20,16 +20,6 @@ const transporter = nodemailer.createTransport({
  * Falls back safely to terminal logging if SMTP credentials are missing.
  */
 export async function sendOtpEmail(toEmail, userName, otpCode) {
-    // Check if credentials are set. If not, log to console as fallback.
-    if (!process.env.SMTP_USER || !process.env.SMTP_PASS) {
-        console.log(`\n======================================================`);
-        console.log(`[MOCK MAIL SENDER] To: ${toEmail} (${userName})`);
-        console.log(`[OTP CODE]: ${otpCode}`);
-        console.log(`[NOTICE]: Add SMTP_USER and SMTP_PASS to send real emails.`);
-        console.log(`======================================================\n`);
-        return { success: true, mocked: true };
-    }
-
     const htmlContent = `
         <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 550px; margin: 0 auto; padding: 25px; border: 1px solid #e8e8e8; border-radius: 20px; background-color: #ffffff; color: #333333;">
             <div style="text-align: center; margin-bottom: 20px;">
@@ -57,6 +47,50 @@ export async function sendOtpEmail(toEmail, userName, otpCode) {
             </div>
         </div>
     `;
+
+    // 1. Check if Brevo HTTP API is configured
+    if (process.env.BREVO_API_KEY) {
+        try {
+            console.log(`[BREVO API] Attempting to send email via Brevo HTTP API to ${toEmail}...`);
+            const senderEmail = process.env.SMTP_USER || 'urayenezajeand@gmail.com';
+            
+            const response = await fetch('https://api.brevo.com/v3/smtp/email', {
+                method: 'POST',
+                headers: {
+                    'accept': 'application/json',
+                    'api-key': process.env.BREVO_API_KEY,
+                    'content-type': 'application/json'
+                },
+                body: JSON.stringify({
+                    sender: { name: 'AgriMarket Security', email: senderEmail },
+                    to: [{ email: toEmail, name: userName }],
+                    subject: `[AgriMarket] OTP Code: ${otpCode} - Hindura Ijambo ry'ibanga`,
+                    htmlContent: htmlContent
+                })
+            });
+
+            const data = await response.json();
+            if (response.ok) {
+                console.log(`[BREVO SUCCESS] Email sent to ${toEmail}. Message ID: ${data.messageId}`);
+                return { success: true, mocked: false, messageId: data.messageId };
+            } else {
+                throw new Error(data.message || 'Brevo API returned an error');
+            }
+        } catch (error) {
+            console.error('[BREVO ERROR] Failed to send email via Brevo API:', error);
+            // Fall back to SMTP check if Brevo fails
+        }
+    }
+
+    // 2. Fall back to SMTP check
+    if (!process.env.SMTP_USER || !process.env.SMTP_PASS) {
+        console.log(`\n======================================================`);
+        console.log(`[MOCK MAIL SENDER] To: ${toEmail} (${userName})`);
+        console.log(`[OTP CODE]: ${otpCode}`);
+        console.log(`[NOTICE]: Add BREVO_API_KEY or SMTP credentials to send real emails.`);
+        console.log(`======================================================\n`);
+        return { success: true, mocked: true };
+    }
 
     const mailOptions = {
         from: `"AgriMarket Security" <${process.env.SMTP_USER}>`,

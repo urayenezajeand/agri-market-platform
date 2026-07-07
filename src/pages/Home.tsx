@@ -77,6 +77,60 @@ export default function Home() {
     }
   ];
 
+  // Partnered Farmers Carousel definition
+  const [farmerIndex, setFarmerIndex] = useState(0);
+
+  const partneredFarmers = [
+    {
+      id: 1,
+      name: "Farmer Kamana",
+      region: "Musanze District",
+      badge: "Top Seller",
+      specialty: "Kinigi Potatoes & Organic Tomatoes",
+      bio: "Kamana has been farming in the fertile volcanic soil of Musanze for 15 years, supplying high-quality organic crops.",
+      image: "https://images.unsplash.com/photo-1595273670150-db0a3e39843c?w=450&auto=format&fit=crop&q=80",
+      rating: "4.9",
+    },
+    {
+      id: 2,
+      name: "Dr. Agnes R. (RAB)",
+      region: "Gatsibo District",
+      badge: "Certified Expert",
+      specialty: "Hybrid Maize & Grains",
+      bio: "Dr. Agnes collaborates with Rwanda Agriculture Board to grow drought-resistant grains using modern organic practices.",
+      image: "https://images.unsplash.com/photo-1592924357228-91a4daadcfea?w=450&auto=format&fit=crop&q=80",
+      rating: "4.8",
+    },
+    {
+      id: 3,
+      name: "Mama Keza",
+      region: "Huye District",
+      badge: "Organic Certified",
+      specialty: "Sweet Bananas & Mangoes",
+      bio: "Mama Keza runs a community cooperative of women farmers in Huye, specializing in pesticide-free tropical fruits.",
+      image: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=450&auto=format&fit=crop&q=80",
+      rating: "4.9",
+    },
+    {
+      id: 4,
+      name: "Jean Bosco N.",
+      region: "Rubavu District",
+      badge: "Local Partner",
+      specialty: "Green Vegetables & Tea",
+      bio: "Located near Lake Kivu, Bosco's farm produces lush cabbages, spinach, and high-quality local tea leaves.",
+      image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=450&auto=format&fit=crop&q=80",
+      rating: "4.7",
+    }
+  ];
+
+  const handleNextFarmer = () => {
+    setFarmerIndex((prev) => (prev === partneredFarmers.length - 1 ? 0 : prev + 1));
+  };
+
+  const handlePrevFarmer = () => {
+    setFarmerIndex((prev) => (prev === 0 ? partneredFarmers.length - 1 : prev - 1));
+  };
+
   // Auto-play the slider carousel every 6 seconds
   useEffect(() => {
     const timer = setInterval(() => {
@@ -555,6 +609,12 @@ export default function Home() {
                             {p.name}
                           </h3>
 
+                          {/* Seller Badge */}
+                          <div className="flex items-center space-x-1.5 mt-1 text-[10px] text-slate-500 font-semibold">
+                            <span className="text-emerald-600 text-xs">🧑‍🌾</span>
+                            <span className="truncate">{p.vendor_name || 'Rwandan Farmer'}</span>
+                          </div>
+
                           {/* Rating block badge */}
                           <div className="flex items-center space-x-1 mt-1.5">
                             <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5 text-amber-500 fill-current" viewBox="0 0 20 20">
@@ -641,6 +701,107 @@ export default function Home() {
 
           </div>
         )}
+
+        {/* PARTNERED FARMERS CAROUSEL SECTION */}
+        <div className="mt-20 border-t border-stone-200/50 pt-16">
+          <div className="flex flex-col md:flex-row md:items-center justify-between mb-8">
+            <div>
+              <h2 className="text-2xl font-black text-stone-900 tracking-tight leading-none">
+                Meet Our Partnered Farmers
+              </h2>
+              <p className="text-xs text-stone-500 font-semibold mt-1.5">
+                Connecting you directly with the local growers behind your food.
+              </p>
+            </div>
+            
+            {/* Carousel navigation controls */}
+            <div className="flex space-x-2.5 mt-4 md:mt-0">
+              <button
+                onClick={handlePrevFarmer}
+                className="h-9 w-9 rounded-xl bg-white border border-stone-200 text-stone-600 font-bold active:scale-90 hover:bg-stone-50 transition-all cursor-pointer flex items-center justify-center shadow-sm"
+              >
+                ←
+              </button>
+              <button
+                onClick={handleNextFarmer}
+                className="h-9 w-9 rounded-xl bg-white border border-stone-200 text-stone-600 font-bold active:scale-90 hover:bg-stone-50 transition-all cursor-pointer flex items-center justify-center shadow-sm"
+              >
+                →
+              </button>
+            </div>
+          </div>
+
+          {/* Carousel Slider Card (Glassmorphism & premium details) */}
+          <div className="relative bg-white/70 backdrop-blur-md rounded-3xl border border-stone-200/60 p-6 md:p-10 shadow-sm overflow-hidden flex flex-col md:flex-row items-center gap-8 min-h-[350px]">
+            {/* Absolute decorative backgrounds */}
+            <div className="absolute top-0 right-0 w-48 h-48 bg-emerald-500/5 rounded-full blur-3xl"></div>
+            <div className="absolute bottom-0 left-0 w-48 h-48 bg-teal-500/5 rounded-full blur-3xl"></div>
+            
+            {/* Farmer Photo Overlay details */}
+            <div className="w-full md:w-1/3 relative h-64 md:h-72 rounded-2xl overflow-hidden shadow-md group">
+              <img
+                src={partneredFarmers[farmerIndex].image}
+                alt={partneredFarmers[farmerIndex].name}
+                className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+              />
+              {/* Badge Overlay */}
+              <div className="absolute top-4 left-4 bg-stone-900/80 backdrop-blur-sm text-white text-[9px] font-black uppercase tracking-wider px-3 py-1 rounded-full shadow-sm">
+                {partneredFarmers[farmerIndex].badge}
+              </div>
+              {/* Rating tag overlay */}
+              <div className="absolute bottom-4 right-4 bg-white/90 backdrop-blur-sm text-stone-800 text-[10px] font-black px-2.5 py-1 rounded-lg shadow-sm flex items-center space-x-1">
+                <span className="text-amber-500">★</span>
+                <span>{partneredFarmers[farmerIndex].rating} Rating</span>
+              </div>
+            </div>
+
+            {/* Farmer description details */}
+            <div className="w-full md:w-2/3 space-y-4 md:space-y-6 text-left relative z-10">
+              <div className="space-y-1.5">
+                <span className="inline-block text-[10px] font-black text-emerald-700 uppercase tracking-widest bg-emerald-100/60 px-3 py-0.5 rounded-full">
+                  {partneredFarmers[farmerIndex].region}
+                </span>
+                <h3 className="text-2xl font-black text-stone-900 tracking-tight leading-none">
+                  {partneredFarmers[farmerIndex].name}
+                </h3>
+                <p className="text-xs font-black text-emerald-800 tracking-wide mt-1">
+                  🌾 Specialty: {partneredFarmers[farmerIndex].specialty}
+                </p>
+              </div>
+
+              <p className="text-sm text-stone-600 leading-relaxed font-medium max-w-xl">
+                "{partneredFarmers[farmerIndex].bio}"
+              </p>
+
+              <div className="pt-2 flex flex-wrap gap-3">
+                <Link
+                  to={`/products?search=${encodeURIComponent(partneredFarmers[farmerIndex].name)}`}
+                  className="rounded-xl bg-stone-900 hover:bg-stone-950 text-white px-5 py-3 text-xs font-bold transition-all duration-300 hover:scale-[1.03] active:scale-[0.97] shadow-md flex items-center space-x-1.5"
+                >
+                  <span>Explore Products</span>
+                  <span>→</span>
+                </Link>
+                <div className="flex items-center space-x-2 text-xs text-stone-500 font-semibold px-3 py-2 bg-white/50 border border-stone-200/50 rounded-xl">
+                  <span>🟢 Active Supplier</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Dots Indicator */}
+          <div className="flex justify-center space-x-2 mt-6">
+            {partneredFarmers.map((_, idx) => (
+              <button
+                key={idx}
+                onClick={() => setFarmerIndex(idx)}
+                className={`h-2 rounded-full transition-all duration-300 ${
+                  farmerIndex === idx ? 'w-6 bg-emerald-600' : 'w-2 bg-stone-300 hover:bg-stone-400'
+                }`}
+                title={`Go to slide ${idx + 1}`}
+              ></button>
+            ))}
+          </div>
+        </div>
 
       </div>
     </div>
