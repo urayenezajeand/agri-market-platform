@@ -393,22 +393,22 @@ export default function VendorDashboard() {
               <div style="font-size: 12px; color: #64748b; margin-top: 4px; font-weight: 600;">SaaS Farmer Auditing System</div>
             </div>
             <div class="meta">
-              <div><strong>Generated On:</strong> \${new Date().toLocaleString()}</div>
-              <div><strong>Vendor Account:</strong> Farmer \${user?.name || 'Rwandan Farmer'}</div>
-              <div><strong>Email Address:</strong> \${user?.email || 'No email'}</div>
+              <div><strong>Generated On:</strong> ${new Date().toLocaleString()}</div>
+              <div><strong>Vendor Account:</strong> Farmer ${user?.name || 'Rwandan Farmer'}</div>
+              <div><strong>Email Address:</strong> ${user?.email || 'No email'}</div>
             </div>
           </div>
 
           <div class="stats-grid">
             <div class="stat-card">
               <div class="stat-label">Catalogue & Stock Inventory</div>
-              <div class="stat-val">\${products.length} Crops Listed</div>
-              <div style="font-size: 11px; color: #64748b; margin-top: 4px; font-weight: 500;">Total Stock Level: \${products.reduce((sum, p) => sum + p.stock, 0)} units</div>
+              <div class="stat-val">${products.length} Crops Listed</div>
+              <div style="font-size: 11px; color: #64748b; margin-top: 4px; font-weight: 600;">Total Stock Level: ${products.reduce((sum, p) => sum + p.stock, 0)} units</div>
             </div>
             <div class="stat-card">
               <div class="stat-label">Net Sales Accounting</div>
-              <div class="stat-val earnings">\${totalEarnings.toLocaleString()} RWF</div>
-              <div style="font-size: 11px; color: #64748b; margin-top: 4px; font-weight: 500;">Received from \${totalOrdersCount} completed orders</div>
+              <div class="stat-val earnings">${totalEarnings.toLocaleString()} RWF</div>
+              <div style="font-size: 11px; color: #64748b; margin-top: 4px; font-weight: 500;">Received from ${totalOrdersCount} completed orders</div>
             </div>
           </div>
 
@@ -425,18 +425,18 @@ export default function VendorDashboard() {
               </tr>
             </thead>
             <tbody>
-              \${products.map(p => \`
+              ${products.map(p => `
                 <tr>
-                  <td>#\${p.id}</td>
-                  <td><strong>\${p.name}</strong></td>
-                  <td>\${p.category}</td>
-                  <td style="text-align: right;">\${Number(p.price).toLocaleString()} RWF</td>
-                  <td style="text-align: right;">\${p.stock} units</td>
+                  <td>#${p.id}</td>
+                  <td><strong>${p.name}</strong></td>
+                  <td>${p.category}</td>
+                  <td style="text-align: right;">${Number(p.price).toLocaleString()} RWF</td>
+                  <td style="text-align: right;">${p.stock} units</td>
                   <td style="text-align: right; color: #d97706; font-weight: bold;">
-                    \${p.discount_percent && p.discount_percent > 0 ? \`\${p.discount_percent}% OFF\` : '—'}
+                    ${p.discount_percent && p.discount_percent > 0 ? `${p.discount_percent}% OFF` : '—'}
                   </td>
                 </tr>
-              \`).join('')}
+              `).join('')}
             </tbody>
           </table>
 
@@ -475,7 +475,7 @@ export default function VendorDashboard() {
 
           <div class="footer">
             <p>AgriMarket Digital Cooperatives. Supporting smallholders across Rwanda.</p>
-            <p style="font-size: 9px; color: #cbd5e1; margin-top: 6px;">Securely signed by Farmer \${user?.name || 'Rwandan Farmer'}.</p>
+            <p style="font-size: 9px; color: #cbd5e1; margin-top: 6px;">Securely signed by Farmer ${user?.name || 'Rwandan Farmer'}.</p>
           </div>
 
           <script>
