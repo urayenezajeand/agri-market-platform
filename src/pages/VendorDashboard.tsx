@@ -722,9 +722,31 @@ export default function VendorDashboard() {
           </div>
           <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 text-left text-xs space-y-2.5 font-semibold text-slate-650">
             <p className="text-[10px] uppercase font-black tracking-wider text-slate-450 border-b border-slate-100 pb-1.5">Submitted Registration Details</p>
-            <p>📧 Email Address: <span className="font-mono text-slate-900">{user?.email}</span></p>
-            {user?.tin_number && <p>🆔 TIN Number: <span className="font-mono text-slate-900">{user?.tin_number}</span></p>}
-            {user?.rdb_certificate && <p>📄 RDB Certificate: <span className="font-mono text-slate-950 break-all">{user?.rdb_certificate}</span></p>}
+            <p className="flex justify-between items-center">
+              <span>📧 Email Address:</span>
+              <span className="font-mono text-slate-900">{user?.email}</span>
+            </p>
+            {user?.tin_number && (
+              <p className="flex justify-between items-center">
+                <span>🆔 TIN Number:</span>
+                <span className="font-mono text-slate-900">{user?.tin_number}</span>
+              </p>
+            )}
+            {user?.rdb_certificate && (
+              <p className="flex justify-between items-center">
+                <span>📄 RDB Certificate:</span>
+                <a
+                  href={user.rdb_certificate}
+                  download={`RDB_Certificate_${user.name?.replace(/\s+/g, '_') || 'vendor'}`}
+                  className="bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 px-2 py-0.5 rounded text-[10px] font-bold cursor-pointer transition-colors inline-flex items-center gap-1 border-none"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 fill-none stroke-current stroke-2" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                  </svg>
+                  Download Certificate
+                </a>
+              </p>
+            )}
           </div>
           <div className="text-xs text-slate-500 font-medium">
             Our administrators are checking your TIN number and RDB certificate eligibility. You will gain access to list crops once approved. Thank you for your patience!
