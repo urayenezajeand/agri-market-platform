@@ -201,8 +201,8 @@ router.post('/google-login', async (req, res) => {
                 const passwordHash = await bcrypt.hash(mockPassword, salt);
 
                 const newUser = await pool.query(
-                    'INSERT INTO users (name, email, password_hash, role) VALUES ($1, $2, $3, $4) RETURNING id, name, email, role, created_at',
-                    [name, email, passwordHash, useRole]
+                    'INSERT INTO users (name, email, password_hash, role, vendor_status) VALUES ($1, $2, $3, $4, $5) RETURNING id, name, email, role, vendor_status, created_at',
+                    [name, email, passwordHash, useRole, useRole === 'vendor' ? 'pending' : 'approved']
                 );
                 user = newUser.rows[0];
                 console.log(`Google user registered: ${email}`);
@@ -328,7 +328,7 @@ router.post('/verify-otp', async (req, res) => {
 // Get User Profile
 router.get('/profile', authenticateToken, async (req, res) => {
     try {
-        const result = await pool.query('SELECT id, name, email, role, vendor_status, tin_number, rdb_certificate FROM users WHERE id = $1', [req.user.id]);
+        const result = await pool.query('SELECT id, name, email, role, vendor_status, tin_number, rdb_certificate, phone, shipping_address FROM users WHERE id = $1', [req.user.id]);
         if (result.rows.length === 0) {
             return res.status(404).json({ error: 'Umukoresha ntazwi (User not found)' });
         }
@@ -339,9 +339,9 @@ router.get('/profile', authenticateToken, async (req, res) => {
     }
 });
 
-// Update User Profile (Name & Email)
+// Update User Profile (Name, Email, Phone, Shipping Address, TIN, RDB Certificate)
 router.put('/profile', authenticateToken, async (req, res) => {
-    const { name, email } = req.body;
+    const { name, email, phone, shipping_address, tin_number, rdb_certificate } = req.body;
     const userId = req.user.id;
 
     try {
@@ -357,8 +357,16 @@ router.put('/profile', authenticateToken, async (req, res) => {
 
         // Update user profile in database
         const updated = await pool.query(
-            'UPDATE users SET name = $1, email = $2 WHERE id = $3 RETURNING id, name, email, role, created_at',
-            [name, email, userId]
+            `UPDATE users 
+             SET name = $1, 
+                 email = $2, 
+                 phone = $3, 
+                 shipping_address = $4, 
+                 tin_number = COALESCE($5, tin_number), 
+                 rdb_certificate = COALESCE($6, rdb_certificate) 
+             WHERE id = $7 
+             RETURNING id, name, email, role, phone, shipping_address, vendor_status, tin_number, rdb_certificate, created_at`,
+            [name, email, phone || null, shipping_address || null, tin_number || null, rdb_certificate || null, userId]
         );
 
         res.status(200).json({ user: updated.rows[0] });

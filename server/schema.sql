@@ -10,6 +10,8 @@ CREATE TABLE IF NOT EXISTS users (
     vendor_status VARCHAR(50) NOT NULL DEFAULT 'approved', -- 'pending', 'approved', 'rejected'
     tin_number VARCHAR(100),
     rdb_certificate TEXT,
+    phone VARCHAR(100),
+    shipping_address TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 

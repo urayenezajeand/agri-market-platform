@@ -42,6 +42,15 @@ export async function initializeDatabase() {
       console.error('Failed to ensure TIN and RDB columns:', e);
     }
 
+    // Ensure phone and shipping_address columns exist on users table (Dynamic migration)
+    try {
+      await pool.query("ALTER TABLE users ADD COLUMN IF NOT EXISTS phone VARCHAR(100)");
+      await pool.query("ALTER TABLE users ADD COLUMN IF NOT EXISTS shipping_address TEXT");
+      console.log('Phone and Shipping Address columns ensured on users table.');
+    } catch (e) {
+      console.error('Failed to ensure phone/address columns:', e);
+    }
+
     // Ensure discount_percent column exists on products table (Dynamic migration)
     try {
       await pool.query("ALTER TABLE products ADD COLUMN IF NOT EXISTS discount_percent INT DEFAULT 0");
