@@ -9,6 +9,8 @@ interface User {
     vendor_status?: string;
     tin_number?: string;
     rdb_certificate?: string;
+    phone?: string;
+    shipping_address?: string;
 }
 
 // 2. Miterere y'amakuru ari muri Context (Context shape)

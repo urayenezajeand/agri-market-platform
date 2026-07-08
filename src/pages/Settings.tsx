@@ -120,7 +120,7 @@ export default function Settings() {
   };
 
   return (
-    <div className="min-h-screen bg-[#F3EFE0] py-10 px-4">
+    <div className="min-h-screen bg-[#F4F1EA] py-10 px-4">
       <div className="max-w-4xl mx-auto space-y-8">
         
         {/* Header */}

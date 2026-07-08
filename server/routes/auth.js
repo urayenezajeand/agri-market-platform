@@ -355,6 +355,20 @@ router.put('/profile', authenticateToken, async (req, res) => {
             return res.status(400).json({ error: 'Imeli mukoresheje yarakoreshejwe (Email already in use)' });
         }
 
+        // Retrieve current user details
+        const userRes = await pool.query('SELECT role, vendor_status, tin_number, rdb_certificate FROM users WHERE id = $1', [userId]);
+        const dbUser = userRes.rows[0];
+
+        let newStatus = dbUser.vendor_status;
+        // If a vendor updates their TIN or RDB Certificate, reset status to pending for admin re-verification
+        if (dbUser.role === 'vendor') {
+            const hasNewTin = tin_number && (tin_number !== dbUser.tin_number);
+            const hasNewRdb = rdb_certificate && (rdb_certificate !== dbUser.rdb_certificate);
+            if (hasNewTin || hasNewRdb) {
+                newStatus = 'pending';
+            }
+        }
+
         // Update user profile in database
         const updated = await pool.query(
             `UPDATE users 
@@ -363,10 +377,11 @@ router.put('/profile', authenticateToken, async (req, res) => {
                  phone = $3, 
                  shipping_address = $4, 
                  tin_number = COALESCE($5, tin_number), 
-                 rdb_certificate = COALESCE($6, rdb_certificate) 
-             WHERE id = $7 
+                 rdb_certificate = COALESCE($6, rdb_certificate),
+                 vendor_status = $7
+             WHERE id = $8 
              RETURNING id, name, email, role, phone, shipping_address, vendor_status, tin_number, rdb_certificate, created_at`,
-            [name, email, phone || null, shipping_address || null, tin_number || null, rdb_certificate || null, userId]
+            [name, email, phone || null, shipping_address || null, tin_number || null, rdb_certificate || null, newStatus, userId]
         );
 
         res.status(200).json({ user: updated.rows[0] });

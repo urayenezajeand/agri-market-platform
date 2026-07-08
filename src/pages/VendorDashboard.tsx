@@ -41,8 +41,8 @@ export default function VendorDashboard() {
   const [error, setError] = useState('');
   const [vendorStatus, setVendorStatus] = useState<string>(user?.vendor_status || 'pending');
   
-  // Dashboard navigation tab (extended to include deals and reports)
-  const [activeTab, setActiveTab] = useState<'overview' | 'crops' | 'orders' | 'deals' | 'reports'>('overview');
+  // Dashboard navigation tab (extended to include deals, reports, and settings)
+  const [activeTab, setActiveTab] = useState<'overview' | 'crops' | 'orders' | 'deals' | 'reports' | 'settings'>('overview');
   
   // Sidebar responsive drawer state
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -77,6 +77,82 @@ export default function VendorDashboard() {
   const [discountPercent, setDiscountPercent] = useState('0');
   const [formLoading, setFormLoading] = useState(false);
   const [formError, setFormError] = useState('');
+
+  // Seller settings form states
+  const { login } = useAuth(); // login to sync updated user context
+  const [settingsName, setSettingsName] = useState(user?.name || '');
+  const [settingsEmail, setSettingsEmail] = useState(user?.email || '');
+  const [settingsPhone, setSettingsPhone] = useState(user?.phone || '');
+  const [settingsAddress, setSettingsAddress] = useState(user?.shipping_address || '');
+  const [settingsTin, setSettingsTin] = useState(user?.tin_number || '');
+  const [settingsRdbBase64, setSettingsRdbBase64] = useState(user?.rdb_certificate || '');
+  const [settingsRdbFileName, setSettingsRdbFileName] = useState(user?.rdb_certificate ? 'Certificate already uploaded' : '');
+  const [settingsLoading, setSettingsLoading] = useState(false);
+
+  // Sync settings inputs when user profile is fetched / updated
+  useEffect(() => {
+    if (user) {
+      setSettingsName(user.name || '');
+      setSettingsEmail(user.email || '');
+      setSettingsPhone(user.phone || '');
+      setSettingsAddress(user.shipping_address || '');
+      setSettingsTin(user.tin_number || '');
+      setSettingsRdbBase64(user.rdb_certificate || '');
+      setSettingsRdbFileName(user.rdb_certificate ? 'Certificate already uploaded' : '');
+    }
+  }, [user]);
+
+  const handleSettingsFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setSettingsRdbFileName(file.name);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setSettingsRdbBase64(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleSaveSettings = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSettingsLoading(true);
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/auth/profile`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          name: settingsName,
+          email: settingsEmail,
+          phone: settingsPhone,
+          shipping_address: settingsAddress,
+          tin_number: settingsTin,
+          rdb_certificate: settingsRdbBase64
+        })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to update profile.');
+
+      // Update AuthContext user object so it reflects across the app
+      login(token || '', data.user);
+      
+      // Update local storage so page reload preserves state
+      localStorage.setItem('agri_user', JSON.stringify(data.user));
+      
+      // Update vendorStatus state
+      setVendorStatus(data.user.vendor_status);
+
+      showToast('Profile and business settings updated successfully!', 'success');
+    } catch (err: any) {
+      console.error(err);
+      showToast(err.message || 'Failed to save settings.', 'error');
+    } finally {
+      setSettingsLoading(false);
+    }
+  };
 
   // Fetch products and sales of this vendor
   const fetchData = async () => {
@@ -619,6 +695,7 @@ export default function VendorDashboard() {
     { id: 'orders', title: 'Customer Orders', icon: '📦' },
     { id: 'deals', title: 'Flash Sales / Deals', icon: '⚡' },
     { id: 'reports', title: 'Reports & Auditing', icon: '📋' },
+    { id: 'settings', title: 'Profile & Settings', icon: '⚙️' },
   ] as const;
 
   const chartData = getSalesChartData();
@@ -1630,6 +1707,192 @@ export default function VendorDashboard() {
                     </div>
                   </div>
                 </div>
+
+              </div>
+            )}
+
+            {/* PROFILE & SETTINGS TAB PANEL */}
+            {activeTab === 'settings' && (
+              <div className="max-w-4xl mx-auto space-y-6 animate-fadeIn">
+                
+                {/* Status Card */}
+                <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4">
+                  <div className="flex items-center space-x-4">
+                    <div className={`h-12 w-12 rounded-2xl flex items-center justify-center text-xl ${
+                      vendorStatus === 'approved' ? 'bg-emerald-50 text-emerald-600' :
+                      vendorStatus === 'rejected' ? 'bg-rose-50 text-rose-600' : 'bg-amber-50 text-amber-600'
+                    }`}>
+                      {vendorStatus === 'approved' ? '✅' : vendorStatus === 'rejected' ? '❌' : '⏳'}
+                    </div>
+                    <div>
+                      <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">Verification Status</span>
+                      <h4 className="text-sm font-black text-slate-800 uppercase tracking-tight mt-0.5">
+                        {vendorStatus === 'approved' && 'Konti yemejwe (Account Approved)'}
+                        {vendorStatus === 'pending' && 'Isuzumwa rya Konti (Pending Verification Review)'}
+                        {vendorStatus === 'rejected' && 'Konti yanzwe (Application Rejected)'}
+                        {vendorStatus === 'documents_requested' && 'Harakenewe ibyangombwa (Documents Requested)'}
+                      </h4>
+                    </div>
+                  </div>
+                  <span className={`text-[10px] font-black uppercase tracking-wider px-3 py-1.5 rounded-full ${
+                    vendorStatus === 'approved' ? 'bg-emerald-50 text-emerald-750 border border-emerald-100' :
+                    vendorStatus === 'rejected' ? 'bg-rose-50 text-rose-750 border border-rose-100' : 'bg-amber-50 text-amber-750 border border-amber-100'
+                  }`}>
+                    {vendorStatus}
+                  </span>
+                </div>
+
+                <form onSubmit={handleSaveSettings} className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  
+                  {/* Left Column - Profile & Contact */}
+                  <div className="space-y-6">
+                    {/* Profile Settings Card */}
+                    <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm space-y-4">
+                      <h3 className="text-xs font-black text-slate-800 uppercase tracking-widest border-b border-slate-50 pb-3 flex items-center space-x-2">
+                        <span>👤</span>
+                        <span>Personal Profile</span>
+                      </h3>
+                      
+                      <div className="space-y-4">
+                        <div>
+                          <label htmlFor="settings-name" className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5 pl-1">
+                            Full Name
+                          </label>
+                          <input
+                            id="settings-name"
+                            type="text"
+                            required
+                            value={settingsName}
+                            onChange={(e) => setSettingsName(e.target.value)}
+                            className="block w-full rounded-2xl border border-slate-200 bg-slate-50/50 px-4 py-2.5 text-slate-950 placeholder-slate-400 focus:border-emerald-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 text-xs font-semibold shadow-sm"
+                          />
+                        </div>
+
+                        <div>
+                          <label htmlFor="settings-email" className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5 pl-1">
+                            Email Address
+                          </label>
+                          <input
+                            id="settings-email"
+                            type="email"
+                            required
+                            value={settingsEmail}
+                            onChange={(e) => setSettingsEmail(e.target.value)}
+                            className="block w-full rounded-2xl border border-slate-200 bg-slate-50/50 px-4 py-2.5 text-slate-950 placeholder-slate-400 focus:border-emerald-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 text-xs font-semibold shadow-sm"
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Contact details */}
+                    <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm space-y-4">
+                      <h3 className="text-xs font-black text-slate-800 uppercase tracking-widest border-b border-slate-50 pb-3 flex items-center space-x-2">
+                        <span>📞</span>
+                        <span>Contact & Farm Details</span>
+                      </h3>
+                      
+                      <div className="space-y-4">
+                        <div>
+                          <label htmlFor="settings-phone" className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5 pl-1">
+                            Phone Number (MoMo Payout)
+                          </label>
+                          <input
+                            id="settings-phone"
+                            type="text"
+                            value={settingsPhone}
+                            onChange={(e) => setSettingsPhone(e.target.value)}
+                            className="block w-full rounded-2xl border border-slate-200 bg-slate-50/50 px-4 py-2.5 text-slate-950 placeholder-slate-400 focus:border-emerald-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 text-xs font-semibold shadow-sm"
+                            placeholder="e.g., 078XXXXXXX"
+                          />
+                        </div>
+
+                        <div>
+                          <label htmlFor="settings-address" className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5 pl-1">
+                            Default Shipping / Farm Pickup Address
+                          </label>
+                          <textarea
+                            id="settings-address"
+                            rows={3}
+                            value={settingsAddress}
+                            onChange={(e) => setSettingsAddress(e.target.value)}
+                            className="block w-full rounded-2xl border border-slate-200 bg-slate-50/50 px-4 py-2.5 text-slate-950 placeholder-slate-400 focus:border-emerald-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 text-xs font-semibold shadow-sm resize-none"
+                            placeholder="e.g., Northern Province, Musanze, Busogo"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Right Column - Legal & Verification */}
+                  <div className="space-y-6">
+                    <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm space-y-4">
+                      <h3 className="text-xs font-black text-slate-800 uppercase tracking-widest border-b border-slate-50 pb-3 flex items-center space-x-2">
+                        <span>🛡️</span>
+                        <span>Business Onboarding Verification</span>
+                      </h3>
+                      
+                      <p className="text-[11px] text-slate-400 leading-relaxed font-semibold">
+                        To list agricultural products and receive payouts, Rwandan law requires valid business credentials. Any updates here will trigger administrator re-moderation of your vendor profile.
+                      </p>
+
+                      <div className="space-y-4 pt-2">
+                        <div>
+                          <label htmlFor="settings-tin" className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5 pl-1">
+                            TIN Number (Imisoro ID)
+                          </label>
+                          <input
+                            id="settings-tin"
+                            type="text"
+                            value={settingsTin}
+                            onChange={(e) => setSettingsTin(e.target.value)}
+                            className="block w-full rounded-2xl border border-slate-200 bg-slate-50/50 px-4 py-2.5 text-slate-950 placeholder-slate-400 focus:border-emerald-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 text-xs font-semibold shadow-sm"
+                            placeholder="9-digit Tax Identification Number"
+                          />
+                        </div>
+
+                        <div>
+                          <label htmlFor="settings-rdb" className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5 pl-1">
+                            RDB Certificate File
+                          </label>
+                          <div className="relative flex items-center justify-center border border-dashed border-slate-200 hover:border-emerald-500 rounded-2xl p-4 bg-slate-50/50 cursor-pointer">
+                            <input
+                              id="settings-rdb"
+                              type="file"
+                              accept=".pdf,.png,.jpg,.jpeg"
+                              onChange={handleSettingsFileChange}
+                              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                            />
+                            <div className="text-center space-y-1">
+                              <span className="text-xl block">📄</span>
+                              <span className="text-[10px] font-black text-slate-650 block">
+                                {settingsRdbFileName || 'Click to select new document'}
+                              </span>
+                              <span className="text-[9px] text-slate-400 block">
+                                Supports PDF, PNG, or JPG (Max 5MB)
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <button
+                      type="submit"
+                      disabled={settingsLoading}
+                      className="w-full bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl py-3.5 text-xs font-bold shadow-md cursor-pointer transition-all active:scale-[0.98] disabled:opacity-50 border-none flex items-center justify-center space-x-2"
+                    >
+                      {settingsLoading ? (
+                        <>
+                          <span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"></span>
+                          <span>Saving Settings...</span>
+                        </>
+                      ) : (
+                        <span>Save Profile & Legal settings</span>
+                      )}
+                    </button>
+                  </div>
+
+                </form>
 
               </div>
             )}

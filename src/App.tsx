@@ -18,7 +18,7 @@ import AdminDashboard from './pages/AdminDashboard';
 export default function App() {
   return (
     <Router>
-      <div className="min-h-screen bg-[#F3EFE0] text-stone-800 flex flex-col justify-between">
+      <div className="min-h-screen bg-[#F4F1EA] text-stone-800 flex flex-col justify-between">
         <div>
           <Navbar />
           <Routes>

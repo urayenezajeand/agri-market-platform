@@ -16,7 +16,8 @@ const PORT = process.env.PORT || 5000;
 
 // 1. Middlewares 
 app.use(cors()); //guhuza frontend na back end kdi zikoresha port zitandukanya 
-app.use(express.json()); //gutuma express ibasha gusoma amakuri yanditse muri req.body (json data)
+app.use(express.json({ limit: '10mb' })); //gutuma express ibasha gusoma amakuri yanditse muri req.body (json data)
+app.use(express.urlencoded({ limit: '10mb', extended: true }));
 
 // 2. Register Routes (imihanda cg x imiyoboro)
 app.use('/api/auth', authRouter);
