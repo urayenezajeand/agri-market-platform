@@ -1,7 +1,7 @@
 import express from 'express';
 import pool from '../db.js';
 import { authenticateToken } from '../middleware/auth.js';
-import { sendOrderReceiptEmail } from '../mailer.js';
+import { sendOrderReceiptEmail, sendOrderStatusUpdateEmail } from '../mailer.js';
 
 const router = express.Router();
 
@@ -170,7 +170,20 @@ router.patch('/:id/status', authenticateToken, async (req, res) => {
             return res.status(404).json({ error: 'Order ntibonetse (Order not found)' });
         }
 
-        res.json(result.rows[0]);
+        const order = result.rows[0];
+
+        // Fetch buyer details asynchronously and send status update email
+        pool.query('SELECT name, email FROM users WHERE id = $1', [order.buyer_id])
+            .then(userResult => {
+                if (userResult.rows.length > 0) {
+                    const buyer = userResult.rows[0];
+                    sendOrderStatusUpdateEmail(buyer.email, buyer.name, order.id, status)
+                        .catch(err => console.error('[BACKGROUND EMAIL ERROR] Failed to send order status update email:', err));
+                }
+            })
+            .catch(err => console.error('[DATABASE ERROR] Failed to fetch buyer details for status update email:', err));
+
+        res.json(order);
     } catch (error) {
         console.error('Guhindura status y\'order byanze:', error);
         res.status(500).json({ error: 'Server ifite ikibazo' });

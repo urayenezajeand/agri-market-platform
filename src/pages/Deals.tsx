@@ -68,7 +68,7 @@ export default function Deals() {
         // Let's filter high-quality crops for our exclusive flash deals section.
         // We'll mark them as discounted products sold by Farmer Kamana (vendor_id = 1).
         const dealItems = data
-          .filter((p: any) => p.discount_percent > 0)
+          .filter((p: any) => p.is_approved && p.discount_percent > 0)
           .map((p: any) => {
             const discountPercent = p.discount_percent;
             const originalPrice = Number(p.price);

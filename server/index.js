@@ -5,6 +5,7 @@ import { initializeDatabase } from './initDB.js';
 import authRouter from './routes/auth.js';
 import productsRouter from './routes/products.js';
 import ordersRouter from './routes/orders.js';
+import adminRouter from './routes/admin.js';
 
 
 // Load environment variables
@@ -21,6 +22,7 @@ app.use(express.json()); //gutuma express ibasha gusoma amakuri yanditse muri re
 app.use('/api/auth', authRouter);
 app.use('/api/products', productsRouter);
 app.use('/api/orders', ordersRouter);
+app.use('/api/admin', adminRouter);
 
 
 // 3. Health Check

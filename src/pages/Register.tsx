@@ -13,6 +13,23 @@ export default function Register() {
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
 
+    // TIN and RDB Certificate File States
+    const [tinNumber, setTinNumber] = useState('');
+    const [rdbCertificateBase64, setRdbCertificateBase64] = useState('');
+    const [rdbFileName, setRdbFileName] = useState('');
+
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            setRdbFileName(file.name);
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                setRdbCertificateBase64(reader.result as string);
+            };
+            reader.readAsDataURL(file);
+        }
+    };
+
     const { login } = useAuth();
     const { showToast } = useToast();
     const navigate = useNavigate();
@@ -90,6 +107,8 @@ export default function Register() {
                             );
                             if (checkData.user.role === 'vendor') {
                                 navigate('/vendor/dashboard');
+                            } else if (checkData.user.role === 'admin') {
+                                navigate('/admin/dashboard');
                             } else {
                                 navigate('/');
                             }
@@ -139,6 +158,8 @@ export default function Register() {
 
             if (data.user.role === 'vendor') {
                 navigate('/vendor/dashboard');
+            } else if (data.user.role === 'admin') {
+                navigate('/admin/dashboard');
             } else {
                 navigate('/');
             }
@@ -166,7 +187,14 @@ export default function Register() {
             const res = await fetch(`${API_BASE_URL}/api/auth/register`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ name, email, password, role })
+                body: JSON.stringify({ 
+                    name, 
+                    email, 
+                    password, 
+                    role,
+                    tin_number: role === 'vendor' ? tinNumber : undefined,
+                    rdb_certificate: role === 'vendor' ? rdbCertificateBase64 : undefined
+                })
             });
 
             const data = await res.json();
@@ -181,6 +209,8 @@ export default function Register() {
             // 4. Redirect based on role
             if (data.user.role === 'vendor') {
                 navigate('/vendor/dashboard');
+            } else if (data.user.role === 'admin') {
+                navigate('/admin/dashboard');
             } else {
                 navigate('/');
             }
@@ -321,6 +351,52 @@ export default function Register() {
                                 placeholder="••••••••"
                               />
                         </div>
+
+                        {role === 'vendor' && (
+                            <>
+                                <div>
+                                    <label htmlFor="tin-number" className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5 pl-1">
+                                        TIN Number (Imisoro ID)
+                                    </label>
+                                    <input
+                                        id="tin-number"
+                                        name="tinNumber"
+                                        type="text"
+                                        required
+                                        value={tinNumber}
+                                        onChange={(e) => setTinNumber(e.target.value)}
+                                        className="block w-full rounded-2xl border border-slate-200 bg-white/50 px-4 py-2.5 text-slate-950 placeholder-slate-400 focus:border-emerald-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 text-sm transition-all shadow-sm"
+                                        placeholder="9-digit Tax Identification Number"
+                                    />
+                                </div>
+
+                                <div>
+                                    <label htmlFor="rdb-cert" className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5 pl-1">
+                                        RDB Certificate (Choose File)
+                                    </label>
+                                    <div className="relative flex items-center justify-center border border-dashed border-slate-300 hover:border-emerald-500 rounded-2xl p-4 bg-white/50 cursor-pointer">
+                                        <input
+                                            id="rdb-cert"
+                                            name="rdbCert"
+                                            type="file"
+                                            required
+                                            accept=".pdf,.png,.jpg,.jpeg"
+                                            onChange={handleFileChange}
+                                            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                                        />
+                                        <div className="text-center space-y-1">
+                                            <span className="text-2xl block">📄</span>
+                                            <span className="text-xs font-bold text-slate-650 block">
+                                                {rdbFileName || 'Click to select RDB Document'}
+                                            </span>
+                                            <span className="text-[10px] text-slate-450 block">
+                                                Supports PDF, PNG, or JPG (Max 5MB)
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </>
+                        )}
                     </div>
 
                     <div className="space-y-4">

@@ -243,3 +243,123 @@ export async function sendOrderReceiptEmail(toEmail, userName, orderId, totalAmo
         throw error;
     }
 }
+
+/**
+ * Sends a stylized HTML email to notify the user that their order status has changed.
+ */
+export async function sendOrderStatusUpdateEmail(toEmail, userName, orderId, status) {
+    let statusTitle = status.charAt(0).toUpperCase() + status.slice(1);
+    let statusColor = '#6b7280';
+    let statusDescription = `Your order status has been updated to ${status}.`;
+
+    if (status === 'pending') {
+        statusTitle = 'Order Pending';
+        statusColor = '#d97706';
+        statusDescription = 'Your order has been received and is pending confirmation from the seller.';
+    } else if (status === 'processing') {
+        statusTitle = 'Processing Order';
+        statusColor = '#2563eb';
+        statusDescription = 'Great news! The seller has started processing and packing your items.';
+    } else if (status === 'shipped') {
+        statusTitle = 'Order Shipped 🚚';
+        statusColor = '#10b981';
+        statusDescription = 'Good news! Your order has been shipped and is on its way to your address.';
+    } else if (status === 'delivered') {
+        statusTitle = 'Order Delivered 🎉';
+        statusColor = '#059669';
+        statusDescription = 'Your order has been marked as delivered. Thank you for shopping with us!';
+    } else if (status === 'cancelled') {
+        statusTitle = 'Order Cancelled ❌';
+        statusColor = '#dc2626';
+        statusDescription = 'Your order has been cancelled.';
+    }
+
+    const htmlContent = `
+        <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 550px; margin: 0 auto; padding: 25px; border: 1px solid #e8e8e8; border-radius: 20px; background-color: #ffffff; color: #333333;">
+            <div style="text-align: center; margin-bottom: 20px;">
+                <h1 style="color: #059669; margin: 0; font-size: 26px; font-weight: 800; letter-spacing: -0.5px;">AgriMarket</h1>
+                <p style="color: #6b7280; font-size: 12px; margin-top: 5px; text-transform: uppercase; font-weight: bold; letter-spacing: 1px;">Order Status Update</p>
+            </div>
+            
+            <hr style="border: 0; border-top: 1px solid #f3f4f6; margin-bottom: 25px;">
+            
+            <p style="font-size: 15px; line-height: 1.6; color: #4b5563;">Hello <strong>${userName}</strong>,</p>
+            <p style="font-size: 15px; line-height: 1.6; color: #4b5563;">The status of your order <strong>#${orderId}</strong> has changed:</p>
+            
+            <div style="text-align: center; margin: 30px 0;">
+                <span style="display: inline-block; background-color: ${statusColor}15; border: 1px solid ${statusColor}; border-radius: 12px; padding: 10px 24px; font-size: 18px; font-weight: bold; color: ${statusColor};">${statusTitle}</span>
+                <p style="color: #4b5563; font-size: 14px; margin-top: 15px; line-height: 1.5; font-weight: 500; max-width: 400px; margin-left: auto; margin-right: auto;">${statusDescription}</p>
+            </div>
+            
+            <p style="font-size: 13px; line-height: 1.5; color: #6b7280;">You can log in to your account dashboard at any time to review your full order details and order history.</p>
+            
+            <hr style="border: 0; border-top: 1px solid #f3f4f6; margin: 25px 0;">
+            
+            <div style="text-align: center; color: #9ca3af; font-size: 11px; line-height: 1.4;">
+                <p style="margin: 0; font-weight: bold; color: #6b7280;">AgriMarket Platform Team</p>
+                <p style="margin: 3px 0 0 0;">Kigali, Rwanda</p>
+            </div>
+        </div>
+    `;
+
+    // 1. Check if Brevo HTTP API is configured
+    if (process.env.BREVO_API_KEY) {
+        try {
+            console.log(`[BREVO API] Attempting to send order status update email to ${toEmail}...`);
+            const senderEmail = fromEmail;
+            
+            const response = await fetch('https://api.brevo.com/v3/smtp/email', {
+                method: 'POST',
+                headers: {
+                    'accept': 'application/json',
+                    'api-key': process.env.BREVO_API_KEY,
+                    'content-type': 'application/json'
+                },
+                body: JSON.stringify({
+                    sender: { name: 'AgriMarket Orders', email: senderEmail },
+                    to: [{ email: toEmail, name: userName }],
+                    subject: `Order #${orderId} Status Updated: ${statusTitle}`,
+                    htmlContent: htmlContent
+                })
+            });
+
+            const data = await response.json();
+            if (response.ok) {
+                console.log(`[BREVO SUCCESS] Order status email sent to ${toEmail}. Message ID: ${data.messageId}`);
+                return { success: true, mocked: false, messageId: data.messageId };
+            } else {
+                throw new Error(data.message || 'Brevo API returned an error');
+            }
+        } catch (error) {
+            console.error('[BREVO ERROR] Failed to send order status email via Brevo API:', error);
+        }
+    }
+
+    // 2. Fall back to SMTP check
+    if (!process.env.SMTP_USER || !process.env.SMTP_PASS) {
+        console.log(`\n======================================================`);
+        console.log(`[MOCK ORDER STATUS SENDER] To: ${toEmail} (${userName})`);
+        console.log(`[ORDER ID]: #${orderId}`);
+        console.log(`[NEW STATUS]: ${statusTitle}`);
+        console.log(`[NOTICE]: Add BREVO_API_KEY or SMTP credentials to send real emails.`);
+        console.log(`======================================================\n`);
+        return { success: true, mocked: true };
+    }
+
+    const mailOptions = {
+        from: `"AgriMarket Orders" <${fromEmail}>`,
+        to: toEmail,
+        subject: `Order #${orderId} Status Updated: ${statusTitle}`,
+        html: htmlContent
+    };
+
+    try {
+        const info = await transporter.sendMail(mailOptions);
+        console.log(`[EMAIL SENT] Order status email successfully delivered to ${toEmail}. MessageId: ${info.messageId}`);
+        return { success: true, mocked: false, messageId: info.messageId };
+    } catch (error) {
+        console.error(`[EMAIL ERROR] Failed to send order status email to ${toEmail}:`, error);
+        throw error;
+    }
+}
+

@@ -13,6 +13,7 @@ interface Product {
   image_url?: string;
   vendor_id: number;
   discount_percent?: number;
+  is_approved?: boolean;
 }
 
 interface SaleOrder {
@@ -38,6 +39,7 @@ export default function VendorDashboard() {
   const [sales, setSales] = useState<SaleOrder[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [vendorStatus, setVendorStatus] = useState<string>(user?.vendor_status || 'pending');
   
   // Dashboard navigation tab (extended to include deals and reports)
   const [activeTab, setActiveTab] = useState<'overview' | 'crops' | 'orders' | 'deals' | 'reports'>('overview');
@@ -98,6 +100,27 @@ export default function VendorDashboard() {
       if (!salesRes.ok) throw new Error('Could not load sales orders.');
       const salesData = await salesRes.json();
       setSales(salesData);
+      
+      // Sync latest vendor status
+      try {
+        const profileRes = await fetch(`${API_BASE_URL}/api/auth/profile`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (profileRes.ok) {
+          const profileData = await profileRes.json();
+          setVendorStatus(profileData.user.vendor_status);
+          
+          // Also update local storage so user state stays fresh
+          const storedUser = localStorage.getItem('agri_user');
+          if (storedUser) {
+            const uObj = JSON.parse(storedUser);
+            uObj.vendor_status = profileData.user.vendor_status;
+            localStorage.setItem('agri_user', JSON.stringify(uObj));
+          }
+        }
+      } catch (e) {
+        console.error('Failed to sync profile status:', e);
+      }
       
     } catch (err: any) {
       console.error(err);
@@ -605,6 +628,64 @@ export default function VendorDashboard() {
   const maxSaleAmount = chartData.length > 0 ? Math.max(...chartData.map(d => d.amount)) : 1;
   const maxCropsCount = Math.max(...Object.values(categoryCounts), 1);
 
+  if (vendorStatus === 'pending') {
+    return (
+      <div className="flex min-h-[calc(100vh-62px)] items-center justify-center bg-gradient-to-tr from-emerald-50 via-slate-50 to-teal-50 px-4 py-8 text-stone-850">
+        <div className="max-w-md w-full bg-white/80 backdrop-blur-md rounded-3xl border border-white/50 p-6 sm:p-10 shadow-xl text-center space-y-6">
+          <div className="inline-flex h-16 w-16 items-center justify-center rounded-2xl bg-amber-500 text-white shadow-lg shadow-amber-600/20">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-9 w-9 fill-none stroke-current stroke-2" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+          </div>
+          <div className="space-y-2">
+            <h2 className="text-xl font-black text-slate-900">Konti yanyu iracyasuzumwa (Account Under Review)</h2>
+            <p className="text-xs sm:text-sm text-slate-600">
+              Welcome, <strong>{user?.name}</strong>! Your seller application is currently pending verification.
+            </p>
+          </div>
+          <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 text-left text-xs space-y-2.5 font-semibold text-slate-650">
+            <p className="text-[10px] uppercase font-black tracking-wider text-slate-450 border-b border-slate-100 pb-1.5">Submitted Registration Details</p>
+            <p>📧 Email Address: <span className="font-mono text-slate-900">{user?.email}</span></p>
+            {user?.tin_number && <p>🆔 TIN Number: <span className="font-mono text-slate-900">{user?.tin_number}</span></p>}
+            {user?.rdb_certificate && <p>📄 RDB Certificate: <span className="font-mono text-slate-950 break-all">{user?.rdb_certificate}</span></p>}
+          </div>
+          <div className="text-xs text-slate-500 font-medium">
+            Our administrators are checking your TIN number and RDB certificate eligibility. You will gain access to list crops once approved. Thank you for your patience!
+          </div>
+          <button 
+            onClick={fetchData} 
+            className="w-full bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl py-3 text-xs font-bold shadow-md cursor-pointer transition-all active:scale-[0.98] border-none"
+          >
+            🔄 Check Approval Status
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (vendorStatus === 'rejected') {
+    return (
+      <div className="flex min-h-[calc(100vh-62px)] items-center justify-center bg-gradient-to-tr from-rose-50 via-slate-50 to-teal-50 px-4 py-8 text-stone-850">
+        <div className="max-w-md w-full bg-white/80 backdrop-blur-md rounded-3xl border border-white/50 p-6 sm:p-10 shadow-xl text-center space-y-6">
+          <div className="inline-flex h-16 w-16 items-center justify-center rounded-2xl bg-rose-600 text-white shadow-lg shadow-rose-600/20">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-9 w-9 fill-none stroke-current stroke-2" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
+          <div className="space-y-2">
+            <h2 className="text-xl font-black text-slate-900">Konti yanyu yaranzwe (Application Rejected)</h2>
+            <p className="text-xs sm:text-sm text-slate-650">
+              We are sorry, <strong>{user?.name}</strong>. Your seller onboarding application was rejected.
+            </p>
+          </div>
+          <div className="text-xs text-slate-500 font-medium">
+            Please make sure that the submitted TIN Number and RDB certificate are valid and match your registration name. Contact support for further verification.
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col md:flex-row min-h-[calc(100vh-62px)] bg-slate-50/50">
       
@@ -928,7 +1009,14 @@ export default function VendorDashboard() {
                                   )}
                                 </div>
                                 <div>
-                                  <span className="font-extrabold text-slate-900 block">{p.name}</span>
+                                  <div className="flex items-center space-x-2">
+                                    <span className="font-extrabold text-slate-900">{p.name}</span>
+                                    {!p.is_approved && (
+                                      <span className="inline-block bg-amber-100 text-amber-800 border border-amber-250 text-[8px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded">
+                                        Pending Approval
+                                      </span>
+                                    )}
+                                  </div>
                                   <span className="text-[10px] text-slate-400 line-clamp-1 mt-0.5 max-w-[180px]">{p.description}</span>
                                 </div>
                               </td>

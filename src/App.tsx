@@ -13,6 +13,7 @@ import VendorDashboard from './pages/VendorDashboard';
 import Orders from './pages/Orders';
 import ForgotPassword from './pages/ForgotPassword';
 import Settings from './pages/Settings';
+import AdminDashboard from './pages/AdminDashboard';
 
 export default function App() {
   return (
@@ -34,6 +35,7 @@ export default function App() {
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/settings" element={<Settings />} />
             <Route path="/vendor/dashboard" element={<VendorDashboard />} />
+            <Route path="/admin/dashboard" element={<AdminDashboard />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </div>

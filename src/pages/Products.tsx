@@ -41,9 +41,10 @@ export default function Products() {
         const res = await fetch(`${API_BASE_URL}/api/products`);
         if (!res.ok) throw new Error('Failed to fetch catalog.');
         const data = await res.json();
+        const approved = data.filter((p: any) => p.is_approved);
         
         // Mock rating data for visual excellence (modulo-based to support arbitrary DB IDs)
-        const enriched = data.map((p: any) => {
+        const enriched = approved.map((p: any) => {
           const ratings = [4.8, 4.7, 4.9, 4.6];
           return {
             ...p,

@@ -6,6 +6,9 @@ interface User {
     name: string;
     email: string;
     role: 'buyer' | 'vendor' | 'admin';
+    vendor_status?: string;
+    tin_number?: string;
+    rdb_certificate?: string;
 }
 
 // 2. Miterere y'amakuru ari muri Context (Context shape)
@@ -14,6 +17,7 @@ interface AuthContextType {
     token: string | null;
     isAuthenticated: boolean;
     isVendor: boolean;
+    isAdmin: boolean;
     login: (token: string, user: User) => void;
     logout: () => void;
     loading: boolean;
@@ -56,9 +60,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     const isAuthenticated = !!token;
     const isVendor = user?.role === 'vendor';
+    const isAdmin = user?.role === 'admin';
 
     return (
-        <AuthContext.Provider value={{ user, token, isAuthenticated, isVendor, login, logout, loading }}>
+        <AuthContext.Provider value={{ user, token, isAuthenticated, isVendor, isAdmin, login, logout, loading }}>
             {children}
         </AuthContext.Provider>
     );

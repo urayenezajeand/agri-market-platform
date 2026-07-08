@@ -190,7 +190,8 @@ export default function Home() {
         const res = await fetch(`${API_BASE_URL}/api/products`);
         if (!res.ok) throw new Error('Crops could not be loaded.');
         const data = await res.json();
-        setProducts(data);
+        const approved = data.filter((p: any) => p.is_approved);
+        setProducts(approved);
       } catch (err: any) {
         console.error(err);
         setError(err.message || 'Failed to connect to the server. Please check if the backend is running.');

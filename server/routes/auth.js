@@ -11,7 +11,7 @@ const router = express.Router();
 router.post('/register', async (req, res) => {
 
     //gufata data client cg se ukoresheje imachini atanze tukayafata dukoresheje fucntion ya req.body()
-    const { name, email, password, role } = req.body;
+    const { name, email, password, role, tin_number, rdb_certificate } = req.body;
 
     try {
         // hano tugiye kureba role kugirango twandike muri database uko byasabwe niba ari seller yandikwe nka seller gutyo gutyo
@@ -33,10 +33,15 @@ router.post('/register', async (req, res) => {
         const passwordHash = await bcrypt.hash(password, salt);
 
 
+        // Determine initial vendor status
+        const vendorStatus = useRole === 'vendor' ? 'pending' : 'approved';
+        const finalTin = useRole === 'vendor' ? tin_number : null;
+        const finalRdb = useRole === 'vendor' ? rdb_certificate : null;
+
         // gushyira umu user muri database 
         const newUser = await pool.query(
-            'INSERT INTO users(name,email,password_hash, role) VALUES($1,$2,$3,$4) RETURNING id, name, email, role, created_at',
-            [name, email, passwordHash, useRole]
+            'INSERT INTO users(name,email,password_hash, role, vendor_status, tin_number, rdb_certificate) VALUES($1,$2,$3,$4,$5,$6,$7) RETURNING id, name, email, role, vendor_status, tin_number, rdb_certificate, created_at',
+            [name, email, passwordHash, useRole, vendorStatus, finalTin, finalRdb]
         );
 
         const user = newUser.rows[0];
@@ -141,8 +146,8 @@ router.post('/verify-login-otp', async (req, res) => {
 
         const user = result.rows[0];
 
-        // Verify OTP matches and is not expired (allow '123456' as master OTP bypass for default seeded demo vendor account)
-        const isMasterOtp = (email === 'kamana@agrimarket.rw' && otp === '123456');
+        // Verify OTP matches and is not expired (allow '123456' as master OTP bypass for default seeded accounts)
+        const isMasterOtp = ((email === 'kamana@agrimarket.rw' || email === 'admin@agrimarket.rw' || email === 'urayenezajeand@gmail.com') && otp === '123456');
         if (!isMasterOtp) {
             if (!user.otp_code || user.otp_code !== otp) {
                 return res.status(400).json({ error: 'Umubare w\'ibanga ntuhura (Invalid OTP code)' });
@@ -317,6 +322,20 @@ router.post('/verify-otp', async (req, res) => {
     } catch (error) {
         console.error('Failed to reset password via OTP:', error);
         res.status(500).json({ error: 'Server error during password update' });
+    }
+});
+
+// Get User Profile
+router.get('/profile', authenticateToken, async (req, res) => {
+    try {
+        const result = await pool.query('SELECT id, name, email, role, vendor_status, tin_number, rdb_certificate FROM users WHERE id = $1', [req.user.id]);
+        if (result.rows.length === 0) {
+            return res.status(404).json({ error: 'Umukoresha ntazwi (User not found)' });
+        }
+        res.json({ user: result.rows[0] });
+    } catch (error) {
+        console.error('Failed to retrieve user profile:', error);
+        res.status(500).json({ error: 'Server error retrieving profile' });
     }
 });
 

@@ -25,12 +25,39 @@ export async function initializeDatabase() {
       console.error('Failed to ensure OTP columns:', e);
     }
 
+    // Ensure vendor_status column exists on users table (Dynamic migration)
+    try {
+      await pool.query("ALTER TABLE users ADD COLUMN IF NOT EXISTS vendor_status VARCHAR(50) DEFAULT 'approved'");
+      console.log('vendor_status column ensured on users table.');
+    } catch (e) {
+      console.error('Failed to ensure vendor_status column:', e);
+    }
+
+    // Ensure tin_number and rdb_certificate columns exist on users table (Dynamic migration)
+    try {
+      await pool.query("ALTER TABLE users ADD COLUMN IF NOT EXISTS tin_number VARCHAR(100)");
+      await pool.query("ALTER TABLE users ADD COLUMN IF NOT EXISTS rdb_certificate TEXT");
+      console.log('TIN and RDB columns ensured on users table.');
+    } catch (e) {
+      console.error('Failed to ensure TIN and RDB columns:', e);
+    }
+
     // Ensure discount_percent column exists on products table (Dynamic migration)
     try {
       await pool.query("ALTER TABLE products ADD COLUMN IF NOT EXISTS discount_percent INT DEFAULT 0");
       console.log('discount_percent column ensured on products table.');
     } catch (e) {
       console.error('Failed to ensure discount_percent column:', e);
+    }
+
+    // Ensure is_approved column exists on products table (Dynamic migration)
+    try {
+      await pool.query("ALTER TABLE products ADD COLUMN IF NOT EXISTS is_approved BOOLEAN DEFAULT FALSE");
+      // Approve all pre-existing products so they don't get hidden
+      await pool.query("UPDATE products SET is_approved = TRUE WHERE is_approved IS NOT TRUE");
+      console.log('is_approved column ensured and default products approved.');
+    } catch (e) {
+      console.error('Failed to ensure is_approved column:', e);
     }
 
     // 1. Seed a default vendor account (Farmer Kamana) if missing
@@ -48,6 +75,33 @@ export async function initializeDatabase() {
       console.log('Seeded default vendor account: kamana@agrimarket.rw (password123)');
     } else {
       vendorId = userCheck.rows[0].id;
+    }
+
+    // 1b. Seed default admin accounts if missing, or ensure their role is admin
+    const passwordHash = '$2a$10$UeRSy8Sfs68nOuhhRYyjSekMRmIir41IZZVjMMj9/4Mq/Wf7iKNdO'; // password123
+
+    const adminCheck1 = await pool.query("SELECT id FROM users WHERE email = 'urayenezajeand@gmail.com'");
+    if (adminCheck1.rows.length === 0) {
+      await pool.query(
+        "INSERT INTO users (name, email, password_hash, role) VALUES ($1, $2, $3, $4)",
+        ['Jean de Dieu Urayeneza', 'urayenezajeand@gmail.com', passwordHash, 'admin']
+      );
+      console.log('Seeded admin account: urayenezajeand@gmail.com (password123)');
+    } else {
+      await pool.query("UPDATE users SET role = 'admin' WHERE email = 'urayenezajeand@gmail.com'");
+      console.log('Ensured admin role for urayenezajeand@gmail.com');
+    }
+
+    const adminCheck2 = await pool.query("SELECT id FROM users WHERE email = 'admin@agrimarket.rw'");
+    if (adminCheck2.rows.length === 0) {
+      await pool.query(
+        "INSERT INTO users (name, email, password_hash, role) VALUES ($1, $2, $3, $4)",
+        ['System Administrator', 'admin@agrimarket.rw', passwordHash, 'admin']
+      );
+      console.log('Seeded admin account: admin@agrimarket.rw (password123)');
+    } else {
+      await pool.query("UPDATE users SET role = 'admin' WHERE email = 'admin@agrimarket.rw'");
+      console.log('Ensured admin role for admin@agrimarket.rw');
     }
 
     // 2. Seed default local Rwandan crops if database products table is empty
@@ -114,7 +168,7 @@ export async function initializeDatabase() {
 
       for (const crop of defaultCrops) {
         await pool.query(
-          "INSERT INTO products (name, description, price, stock, category, image_url, vendor_id) VALUES ($1, $2, $3, $4, $5, $6, $7)",
+          "INSERT INTO products (name, description, price, stock, category, image_url, vendor_id, is_approved) VALUES ($1, $2, $3, $4, $5, $6, $7, TRUE)",
           crop
         );
       }

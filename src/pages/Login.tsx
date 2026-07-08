@@ -192,6 +192,8 @@ export default function Login() {
       login(data.token, data.user);
       if (data.user.role === 'vendor') {
         navigate('/vendor/dashboard');
+      } else if (data.user.role === 'admin') {
+        navigate('/admin/dashboard');
       } else {
         navigate('/');
       }
@@ -235,6 +237,8 @@ export default function Login() {
       // 3. Redirect
       if (data.user.role === 'vendor') {
         navigate('/vendor/dashboard');
+      } else if (data.user.role === 'admin') {
+        navigate('/admin/dashboard');
       } else {
         navigate('/');
       }

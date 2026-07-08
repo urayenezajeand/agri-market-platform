@@ -6,7 +6,7 @@ import { useToast } from '../context/ToastContext';
 import { API_BASE_URL } from '../config';
 
 export default function Navbar() {
-  const { user, logout, isAuthenticated, isVendor } = useAuth();
+  const { user, logout, isAuthenticated, isVendor, isAdmin } = useAuth();
   const { cartCount, addToCart } = useCart();
   const { showToast } = useToast();
   const navigate = useNavigate();
@@ -71,7 +71,8 @@ export default function Navbar() {
         const res = await fetch(`${API_BASE_URL}/api/products`);
         if (res.ok) {
           const data = await res.json();
-          setAllProducts(data);
+          const approved = data.filter((p: any) => p.is_approved);
+          setAllProducts(approved);
         }
       } catch (e) {
         console.error('Failed to pre-fetch search products list:', e);
@@ -273,7 +274,7 @@ export default function Navbar() {
                       <p className="text-[9px] uppercase font-black tracking-widest text-slate-400">Logged in as</p>
                       <p className="text-xs font-bold text-slate-900 truncate">{user?.name}</p>
                       <span className="inline-block mt-1 text-[8px] font-black uppercase tracking-wider bg-emerald-50 text-emerald-700 px-1.5 py-0.5 rounded">
-                        {user?.role === 'vendor' ? 'Seller / Farmer' : 'Buyer'}
+                        {user?.role === 'vendor' ? 'Seller / Farmer' : user?.role === 'admin' ? 'Administrator' : 'Buyer'}
                       </span>
                     </div>
                     
@@ -302,6 +303,16 @@ export default function Navbar() {
                         >
                           <span>📊</span>
                           <span>Dashboard</span>
+                        </Link>
+                      )}
+                      {isAdmin && (
+                        <Link 
+                          to="/admin/dashboard" 
+                          onClick={() => setIsProfileDropdownOpen(false)}
+                          className="flex items-center space-x-2 px-4 py-2.5 text-xs font-bold text-red-600 hover:bg-slate-50 transition-colors"
+                        >
+                          <span>🛡️</span>
+                          <span>Admin Dashboard</span>
                         </Link>
                       )}
                     </div>
@@ -546,7 +557,7 @@ export default function Navbar() {
                       <p className="font-extrabold text-slate-900 text-sm">{user?.name}</p>
                       <p className="text-xs text-slate-500">{user?.email}</p>
                       <span className="inline-block mt-2 text-[9px] uppercase font-black tracking-wider px-2 py-0.5 rounded bg-emerald-100 text-emerald-800">
-                        {user?.role === 'vendor' ? 'Farmer / Seller' : 'Buyer'}
+                        {user?.role === 'vendor' ? 'Farmer / Seller' : user?.role === 'admin' ? 'Administrator' : 'Buyer'}
                       </span>
                     </div>
                   ) : (
@@ -632,6 +643,15 @@ export default function Navbar() {
                         className="block w-full text-center bg-indigo-50 text-indigo-700 hover:bg-indigo-100 rounded-xl py-2.5 text-xs font-bold"
                       >
                         📊 Vendor Dashboard
+                      </Link>
+                    )}
+                    {isAdmin && (
+                      <Link 
+                        to="/admin/dashboard"
+                        onClick={() => setIsMobileMenuOpen(false)}
+                        className="block w-full text-center bg-red-50 text-red-700 hover:bg-red-100 rounded-xl py-2.5 text-xs font-bold"
+                      >
+                        🛡️ Admin Dashboard
                       </Link>
                     )}
                     <button 
