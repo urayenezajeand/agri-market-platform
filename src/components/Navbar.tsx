@@ -21,6 +21,9 @@ export default function Navbar() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
 
+  // Guest users (not authenticated) and users with 'buyer' role are considered buyers
+  const isBuyer = !isAuthenticated || user?.role === 'buyer';
+
   // Load wishlist on init and register event listeners
   const loadWishlist = () => {
     try {
@@ -146,7 +149,7 @@ export default function Navbar() {
           <div className="hidden lg:flex items-center space-x-5 text-xs font-bold text-stone-600 whitespace-nowrap">
             <Link to="/products" className="hover:text-emerald-600 transition-colors">Shop</Link>
             <Link to="/deals" className="text-amber-600 font-extrabold hover:text-amber-705 transition-colors">Daily Deals</Link>
-            <Link to="/orders" className="hover:text-emerald-600 transition-colors">Track Order</Link>
+            {isBuyer && <Link to="/orders" className="hover:text-emerald-600 transition-colors">Track Order</Link>}
             <Link to="/?filter=blogs" className="hover:text-emerald-600 transition-colors">Blogs</Link>
             <Link to={isVendor ? "/vendor/dashboard" : "/register?role=vendor"} className="text-orange-600 font-black hover:text-orange-705 transition-colors">Sell on AgriMarket</Link>
           </div>
@@ -221,36 +224,40 @@ export default function Navbar() {
           {/* 4. Cart, Wishlist, Unified Accounts Dropdown */}
           <div className="flex items-center space-x-4 md:space-x-6 text-sm shrink-0">
             {/* Cart Button */}
-            <Link to="/cart" className="relative flex items-center space-x-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 px-3.5 py-2.5 rounded-xl border border-emerald-100 transition-all duration-300 hover:scale-[1.03] active:scale-[0.97] shadow-sm">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-emerald-700 fill-none stroke-current stroke-2" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
-              </svg>
-              <div className="text-left text-xs leading-tight hidden md:block">
-                <p className="text-[9px] text-emerald-600 font-bold">Cart</p>
-                <p className="font-black text-emerald-950">{cartCount} items</p>
-              </div>
-              {cartCount > 0 && (
-                <span className="absolute md:hidden -top-1 -right-1 flex h-4.5 w-4.5 items-center justify-center rounded-full bg-emerald-600 text-[8px] font-bold text-white shadow-sm animate-pulse">
-                  {cartCount}
-                </span>
-              )}
-            </Link>
+            {isBuyer && (
+              <Link to="/cart" className="relative flex items-center space-x-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 px-3.5 py-2.5 rounded-xl border border-emerald-100 transition-all duration-300 hover:scale-[1.03] active:scale-[0.97] shadow-sm">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-emerald-700 fill-none stroke-current stroke-2" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+                </svg>
+                <div className="text-left text-xs leading-tight hidden md:block">
+                  <p className="text-[9px] text-emerald-600 font-bold">Cart</p>
+                  <p className="font-black text-emerald-950">{cartCount} items</p>
+                </div>
+                {cartCount > 0 && (
+                  <span className="absolute md:hidden -top-1 -right-1 flex h-4.5 w-4.5 items-center justify-center rounded-full bg-emerald-600 text-[8px] font-bold text-white shadow-sm animate-pulse">
+                    {cartCount}
+                  </span>
+                )}
+              </Link>
+            )}
 
             {/* Wishlist */}
-            <div 
-              onClick={() => setIsWishlistOpen(true)}
-              className="relative cursor-pointer text-xs text-center text-slate-500 hover:text-emerald-600 flex flex-col items-center transition-colors"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-current fill-none stroke-current stroke-2" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-              </svg>
-              <p className="font-semibold mt-0.5 hidden md:block">Wishlist</p>
-              {wishlist.length > 0 && (
-                <span className="absolute -top-1 -right-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-rose-500 text-[8px] font-bold text-white shadow-sm">
-                  {wishlist.length}
-                </span>
-              )}
-            </div>
+            {isBuyer && (
+              <div 
+                onClick={() => setIsWishlistOpen(true)}
+                className="relative cursor-pointer text-xs text-center text-slate-500 hover:text-emerald-600 flex flex-col items-center transition-colors"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-current fill-none stroke-current stroke-2" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                </svg>
+                <p className="font-semibold mt-0.5 hidden md:block">Wishlist</p>
+                {wishlist.length > 0 && (
+                  <span className="absolute -top-1 -right-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-rose-500 text-[8px] font-bold text-white shadow-sm">
+                    {wishlist.length}
+                  </span>
+                )}
+              </div>
+            )}
 
             {/* Account Sign In Dropdown in the corner */}
             {isAuthenticated ? (
@@ -279,14 +286,16 @@ export default function Navbar() {
                     </div>
                     
                     <div className="py-1">
-                      <Link 
-                        to="/orders" 
-                        onClick={() => setIsProfileDropdownOpen(false)}
-                        className="flex items-center space-x-2 px-4 py-2.5 text-xs font-bold text-slate-700 hover:bg-slate-50 hover:text-emerald-600 transition-colors"
-                      >
-                        <span>📦</span>
-                        <span>My Orders</span>
-                      </Link>
+                      {isBuyer && (
+                        <Link 
+                          to="/orders" 
+                          onClick={() => setIsProfileDropdownOpen(false)}
+                          className="flex items-center space-x-2 px-4 py-2.5 text-xs font-bold text-slate-700 hover:bg-slate-50 hover:text-emerald-600 transition-colors"
+                        >
+                          <span>📦</span>
+                          <span>My Orders</span>
+                        </Link>
+                      )}
                       <Link 
                         to="/settings" 
                         onClick={() => setIsProfileDropdownOpen(false)}
@@ -367,17 +376,19 @@ export default function Navbar() {
           >
             Daily Deals
           </Link>
-          <Link 
-            to="/orders" 
-            className="relative pb-0.5 hover:text-emerald-600 transition-colors duration-200 flex items-center space-x-1.5 after:absolute after:bottom-0 after:left-0 after:h-0.5 after:w-0 after:bg-emerald-600 hover:after:w-full after:transition-all after:duration-300"
-          >
-            {/* Truck SVG */}
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M9 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0z" />
-              <path strokeLinecap="round" strokeLinejoin="round" d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 011-1v-4a1 1 0 01.4-.8l2.28-2.28A1 1 0 0117.3 8H20a1 1 0 011 1v7a1 1 0 01-1 1h-1m-6 0a2 2 0 00-4 0m9 0a2 2 0 00-4 0" />
-            </svg>
-            <span>Track Order</span>
-          </Link>
+          {isBuyer && (
+            <Link 
+              to="/orders" 
+              className="relative pb-0.5 hover:text-emerald-600 transition-colors duration-200 flex items-center space-x-1.5 after:absolute after:bottom-0 after:left-0 after:h-0.5 after:w-0 after:bg-emerald-600 hover:after:w-full after:transition-all after:duration-300"
+            >
+              {/* Truck SVG */}
+              <svg xmlns="http://www.w3.org/2055/svg" className="h-4 w-4 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0z" />
+                <path strokeLinecap="round" strokeLinejoin="round" d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 011-1v-4a1 1 0 01.4-.8l2.28-2.28A1 1 0 0117.3 8H20a1 1 0 011 1v7a1 1 0 01-1 1h-1m-6 0a2 2 0 00-4 0m9 0a2 2 0 00-4 0" />
+              </svg>
+              <span>Track Order</span>
+            </Link>
+          )}
           <Link 
             to="/?filter=blogs" 
             className="relative pb-0.5 hover:text-emerald-600 transition-colors duration-200 after:absolute after:bottom-0 after:left-0 after:h-0.5 after:w-0 after:bg-emerald-600 hover:after:w-full after:transition-all after:duration-300"
@@ -596,14 +607,16 @@ export default function Navbar() {
                     <span>Daily Deals</span>
                   </Link>
 
-                  <Link 
-                    to="/orders" 
-                    onClick={() => setIsMobileMenuOpen(false)}
-                    className="flex items-center space-x-3 text-slate-700 font-bold hover:text-emerald-600 transition-colors py-1 text-sm"
-                  >
-                    <span>📦</span>
-                    <span>Track Order / My Orders</span>
-                  </Link>
+                  {isBuyer && (
+                    <Link 
+                      to="/orders" 
+                      onClick={() => setIsMobileMenuOpen(false)}
+                      className="flex items-center space-x-3 text-slate-700 font-bold hover:text-emerald-600 transition-colors py-1 text-sm"
+                    >
+                      <span>📦</span>
+                      <span>Track Order / My Orders</span>
+                    </Link>
+                  )}
 
                   <Link 
                     to="/?filter=blogs" 
