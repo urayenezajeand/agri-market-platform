@@ -209,7 +209,7 @@ Here are the key user interface screenshots capturing the end-to-end functionali
 
 ## 10. Deployment Link
 The application is fully hosted online:
-- **Frontend (Vercel):** [https://agri-market-platform.vercel.app](https://agri-market-platform.vercel.app) *(Note: Replace with your actual deployment link if different)*
+- **Frontend (Vercel):** [https://agri-markett.vercel.app/](https://agri-markett.vercel.app/)
 - **Backend (Render):** [https://agri-market-api.onrender.com](https://agri-market-api.onrender.com) *(Note: Replace with your actual deployment link if different)*
 
 ---
