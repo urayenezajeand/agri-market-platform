@@ -723,28 +723,34 @@ export default function Home() {
               <div className="absolute top-0 right-0 w-48 h-48 bg-emerald-500/5 rounded-full blur-3xl"></div>
               <div className="absolute bottom-0 left-0 w-48 h-48 bg-teal-500/5 rounded-full blur-3xl"></div>
               
-              {/* Farmer Photo Overlay details */}
-              <div className="w-full md:w-1/3 relative h-64 md:h-72 rounded-2xl overflow-hidden shadow-md group bg-emerald-50/40 border border-slate-100 flex items-center justify-center">
-                {/* Fallback avatar visual */}
-                <span className="text-7xl select-none absolute">🧑‍🌾</span>
-                
-                {partneredFarmers[farmerIndex]?.image_url && (
+              {/* Farmer Photo Overlay details / Flyer (Icyapa) */}
+              <div className="w-full md:w-1/3 relative h-64 md:h-72 rounded-2xl overflow-hidden shadow-md group bg-emerald-950 border border-slate-100 flex items-center justify-center">
+                {partneredFarmers[farmerIndex]?.image_url ? (
                   <img
                     src={partneredFarmers[farmerIndex].image_url}
                     alt={partneredFarmers[farmerIndex].name}
-                    onError={(e) => { e.currentTarget.style.display = 'none'; }}
                     className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105 absolute inset-0"
                   />
+                ) : (
+                  // Custom business flyer (icyapa) fallback
+                  <div className="absolute inset-0 w-full h-full bg-cover bg-center flex flex-col justify-end p-4 transition-transform duration-700 group-hover:scale-105"
+                       style={{ backgroundImage: `linear-gradient(to top, rgba(6, 78, 59, 0.9) 30%, rgba(6, 78, 59, 0.4) 70%, rgba(0, 0, 0, 0) 100%), url('https://images.unsplash.com/photo-1500937386664-56d1dfef3854?w=500&auto=format&fit=crop&q=80')` }}>
+                    <div className="text-white text-left space-y-1 bg-black/25 backdrop-blur-[2px] p-3.5 rounded-xl border border-white/10 shadow-lg">
+                      <span className="text-[8px] font-black uppercase tracking-widest text-emerald-300">Official Partner</span>
+                      <h4 className="text-sm font-black leading-tight tracking-tight text-white">{partneredFarmers[farmerIndex]?.name}</h4>
+                      <p className="text-[10px] text-stone-200 font-semibold truncate leading-none">🚜 {partneredFarmers[farmerIndex]?.specialty || 'Fresh local crops'}</p>
+                    </div>
+                  </div>
                 )}
                 {/* Badge Overlay */}
                 {partneredFarmers[farmerIndex]?.badge && (
-                  <div className="absolute top-4 left-4 bg-stone-900/80 backdrop-blur-sm text-white text-[9px] font-black uppercase tracking-wider px-3 py-1 rounded-full shadow-sm">
+                  <div className="absolute top-4 left-4 bg-stone-900/80 backdrop-blur-sm text-white text-[9px] font-black uppercase tracking-wider px-3 py-1 rounded-full shadow-sm z-10">
                     {partneredFarmers[farmerIndex].badge}
                   </div>
                 )}
                 {/* Rating tag overlay */}
                 {partneredFarmers[farmerIndex]?.rating && (
-                  <div className="absolute bottom-4 right-4 bg-white/90 backdrop-blur-sm text-stone-800 text-[10px] font-black px-2.5 py-1 rounded-lg shadow-sm flex items-center space-x-1">
+                  <div className="absolute bottom-4 right-4 bg-white/90 backdrop-blur-sm text-stone-800 text-[10px] font-black px-2.5 py-1 rounded-lg shadow-sm flex items-center space-x-1 z-10">
                     <span className="text-amber-500">★</span>
                     <span>{partneredFarmers[farmerIndex].rating} Rating</span>
                   </div>
