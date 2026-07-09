@@ -20,7 +20,23 @@ export default function Settings() {
   // Profile Form States
   const [name, setName] = useState(user?.name || '');
   const [email, setEmail] = useState(user?.email || '');
+  const [region, setRegion] = useState(user?.region || '');
+  const [specialty, setSpecialty] = useState(user?.specialty || '');
+  const [bio, setBio] = useState(user?.bio || '');
+  const [imageUrl, setImageUrl] = useState(user?.image_url || '');
   const [profileLoading, setProfileLoading] = useState(false);
+
+  // Sync state with user data
+  useEffect(() => {
+    if (user) {
+      setName(user.name || '');
+      setEmail(user.email || '');
+      setRegion(user.region || '');
+      setSpecialty(user.specialty || '');
+      setBio(user.bio || '');
+      setImageUrl(user.image_url || '');
+    }
+  }, [user]);
 
   // Password Form States
   const [currentPassword, setCurrentPassword] = useState('');
@@ -51,7 +67,7 @@ export default function Settings() {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify({ name, email })
+        body: JSON.stringify({ name, email, region, specialty, bio, image_url: imageUrl })
       });
 
       const data = await res.json();
@@ -176,6 +192,64 @@ export default function Settings() {
                     className="block w-full rounded-2xl border border-stone-200 bg-white px-4 py-2.5 text-stone-950 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 text-sm transition-all"
                   />
                 </div>
+
+                {user?.role === 'vendor' && (
+                  <>
+                    <div>
+                      <label className="block text-xs font-bold text-stone-500 uppercase tracking-wider mb-1.5 pl-1">
+                        Region / District
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        value={region}
+                        onChange={(e) => setRegion(e.target.value)}
+                        className="block w-full rounded-2xl border border-stone-200 bg-white px-4 py-2.5 text-stone-950 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 text-sm transition-all"
+                        placeholder="e.g. Musanze District"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold text-stone-500 uppercase tracking-wider mb-1.5 pl-1">
+                        Specialty
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        value={specialty}
+                        onChange={(e) => setSpecialty(e.target.value)}
+                        className="block w-full rounded-2xl border border-stone-200 bg-white px-4 py-2.5 text-stone-950 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 text-sm transition-all"
+                        placeholder="e.g. Kinigi Potatoes & Organic Tomatoes"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold text-stone-500 uppercase tracking-wider mb-1.5 pl-1">
+                        Profile Image URL
+                      </label>
+                      <input
+                        type="url"
+                        value={imageUrl}
+                        onChange={(e) => setImageUrl(e.target.value)}
+                        className="block w-full rounded-2xl border border-stone-200 bg-white px-4 py-2.5 text-stone-950 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 text-sm transition-all"
+                        placeholder="https://images.unsplash.com/..."
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold text-stone-500 uppercase tracking-wider mb-1.5 pl-1">
+                        Farmer Bio / Description
+                      </label>
+                      <textarea
+                        value={bio}
+                        onChange={(e) => setBio(e.target.value)}
+                        rows={3}
+                        className="block w-full rounded-2xl border border-stone-200 bg-white px-4 py-2.5 text-stone-950 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 text-sm transition-all"
+                        placeholder="Tell buyers about your farming experience and practices..."
+                      />
+                    </div>
+                  </>
+                )}
 
                 <div className="flex justify-end">
                   <button

@@ -12,6 +12,12 @@ CREATE TABLE IF NOT EXISTS users (
     rdb_certificate TEXT,
     phone VARCHAR(100),
     shipping_address TEXT,
+    region VARCHAR(255) DEFAULT 'Kigali',
+    badge VARCHAR(100) DEFAULT 'Local Partner',
+    specialty VARCHAR(255) DEFAULT 'General Crops',
+    bio TEXT,
+    image_url TEXT,
+    rating DECIMAL(3,1) DEFAULT 4.8,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 

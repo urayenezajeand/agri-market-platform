@@ -51,6 +51,19 @@ export async function initializeDatabase() {
       console.error('Failed to ensure phone/address columns:', e);
     }
 
+    // Ensure vendor profile columns exist on users table (Dynamic migration)
+    try {
+      await pool.query("ALTER TABLE users ADD COLUMN IF NOT EXISTS region VARCHAR(255) DEFAULT 'Kigali'");
+      await pool.query("ALTER TABLE users ADD COLUMN IF NOT EXISTS badge VARCHAR(100) DEFAULT 'Local Partner'");
+      await pool.query("ALTER TABLE users ADD COLUMN IF NOT EXISTS specialty VARCHAR(255) DEFAULT 'General Crops'");
+      await pool.query("ALTER TABLE users ADD COLUMN IF NOT EXISTS bio TEXT");
+      await pool.query("ALTER TABLE users ADD COLUMN IF NOT EXISTS image_url TEXT");
+      await pool.query("ALTER TABLE users ADD COLUMN IF NOT EXISTS rating DECIMAL(3,1) DEFAULT 4.8");
+      console.log('Vendor profile columns ensured on users table.');
+    } catch (e) {
+      console.error('Failed to ensure vendor profile columns:', e);
+    }
+
     // Ensure discount_percent column exists on products table (Dynamic migration)
     try {
       await pool.query("ALTER TABLE products ADD COLUMN IF NOT EXISTS discount_percent INT DEFAULT 0");
@@ -73,17 +86,34 @@ export async function initializeDatabase() {
     const userCheck = await pool.query("SELECT id FROM users WHERE email = 'kamana@agrimarket.rw'");
     let vendorId;
     
+    const kamanaProfile = {
+      name: 'Farmer Kamana',
+      email: 'kamana@agrimarket.rw',
+      region: 'Musanze District',
+      badge: 'Top Seller',
+      specialty: 'Kinigi Potatoes & Organic Tomatoes',
+      bio: 'Kamana has been farming in the fertile volcanic soil of Musanze for 15 years, supplying high-quality organic crops.',
+      image_url: 'https://images.unsplash.com/photo-1560493676-04071c5f467b?w=450&auto=format&fit=crop&q=80',
+      rating: 4.9
+    };
+
     if (userCheck.rows.length === 0) {
       // Default password hash for 'password123'
       const passwordHash = '$2a$10$UeRSy8Sfs68nOuhhRYyjSekMRmIir41IZZVjMMj9/4Mq/Wf7iKNdO';
       const vendorResult = await pool.query(
-        "INSERT INTO users (name, email, password_hash, role) VALUES ($1, $2, $3, $4) RETURNING id",
-        ['Farmer Kamana', 'kamana@agrimarket.rw', passwordHash, 'vendor']
+        "INSERT INTO users (name, email, password_hash, role, region, badge, specialty, bio, image_url, rating) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING id",
+        [kamanaProfile.name, kamanaProfile.email, passwordHash, 'vendor', kamanaProfile.region, kamanaProfile.badge, kamanaProfile.specialty, kamanaProfile.bio, kamanaProfile.image_url, kamanaProfile.rating]
       );
       vendorId = vendorResult.rows[0].id;
       console.log('Seeded default vendor account: kamana@agrimarket.rw (password123)');
     } else {
       vendorId = userCheck.rows[0].id;
+      // Update existing account to have the correct profile values
+      await pool.query(
+        "UPDATE users SET region = $1, badge = $2, specialty = $3, bio = $4, image_url = $5, rating = $6 WHERE id = $7",
+        [kamanaProfile.region, kamanaProfile.badge, kamanaProfile.specialty, kamanaProfile.bio, kamanaProfile.image_url, kamanaProfile.rating, vendorId]
+      );
+      console.log('Updated existing default vendor account profile values.');
     }
 
     // 1b. Seed default admin accounts if missing, or ensure their role is admin

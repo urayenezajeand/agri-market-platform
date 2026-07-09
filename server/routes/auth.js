@@ -325,10 +325,23 @@ router.post('/verify-otp', async (req, res) => {
     }
 });
 
+// Get list of partnered/approved farmers (vendors)
+router.get('/vendors/partnered', async (req, res) => {
+    try {
+        const result = await pool.query(
+            "SELECT id, name, email, role, region, badge, specialty, bio, image_url, rating FROM users WHERE role = 'vendor' AND vendor_status = 'approved' ORDER BY rating DESC, name ASC"
+        );
+        res.json(result.rows);
+    } catch (error) {
+        console.error('Failed to retrieve partnered vendors:', error);
+        res.status(500).json({ error: 'Server error retrieving vendors list' });
+    }
+});
+
 // Get User Profile
 router.get('/profile', authenticateToken, async (req, res) => {
     try {
-        const result = await pool.query('SELECT id, name, email, role, vendor_status, tin_number, rdb_certificate, phone, shipping_address FROM users WHERE id = $1', [req.user.id]);
+        const result = await pool.query('SELECT id, name, email, role, vendor_status, tin_number, rdb_certificate, phone, shipping_address, region, badge, specialty, bio, image_url, rating FROM users WHERE id = $1', [req.user.id]);
         if (result.rows.length === 0) {
             return res.status(404).json({ error: 'Umukoresha ntazwi (User not found)' });
         }
@@ -339,9 +352,9 @@ router.get('/profile', authenticateToken, async (req, res) => {
     }
 });
 
-// Update User Profile (Name, Email, Phone, Shipping Address, TIN, RDB Certificate)
+// Update User Profile (Name, Email, Phone, Shipping Address, TIN, RDB Certificate, Region, Specialty, Bio, Image URL)
 router.put('/profile', authenticateToken, async (req, res) => {
-    const { name, email, phone, shipping_address, tin_number, rdb_certificate } = req.body;
+    const { name, email, phone, shipping_address, tin_number, rdb_certificate, region, specialty, bio, image_url } = req.body;
     const userId = req.user.id;
 
     try {
@@ -378,10 +391,14 @@ router.put('/profile', authenticateToken, async (req, res) => {
                  shipping_address = $4, 
                  tin_number = COALESCE($5, tin_number), 
                  rdb_certificate = COALESCE($6, rdb_certificate),
-                 vendor_status = $7
-             WHERE id = $8 
-             RETURNING id, name, email, role, phone, shipping_address, vendor_status, tin_number, rdb_certificate, created_at`,
-            [name, email, phone || null, shipping_address || null, tin_number || null, rdb_certificate || null, newStatus, userId]
+                 vendor_status = $7,
+                 region = $8,
+                 specialty = $9,
+                 bio = $10,
+                 image_url = $11
+             WHERE id = $12 
+             RETURNING id, name, email, role, phone, shipping_address, vendor_status, tin_number, rdb_certificate, region, badge, specialty, bio, image_url, rating, created_at`,
+            [name, email, phone || null, shipping_address || null, tin_number || null, rdb_certificate || null, newStatus, region || 'Kigali', specialty || 'General Crops', bio || null, image_url || null, userId]
         );
 
         res.status(200).json({ user: updated.rows[0] });

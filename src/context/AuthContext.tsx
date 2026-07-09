@@ -11,6 +11,12 @@ interface User {
     rdb_certificate?: string;
     phone?: string;
     shipping_address?: string;
+    region?: string;
+    badge?: string;
+    specialty?: string;
+    bio?: string;
+    image_url?: string;
+    rating?: number;
 }
 
 // 2. Miterere y'amakuru ari muri Context (Context shape)
