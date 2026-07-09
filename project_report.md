@@ -225,7 +225,7 @@ Continuous Integration is configured in [.github/workflows/ci-cd.yml](file:///C:
 
 ### CI/CD Workflow Execution Evidence
 The automated CI/CD pipeline validates frontend compilation, backend code syntax, and Docker container structure on every push:
-![CI/CD Pipeline Run Status](./screenshots/cicd_evidence.png) *(Note: Please replace this with a screenshot of your successful GitHub Actions workflow execution)*
+![CI/CD Pipeline Run Status](./screenshots/cicd_evidence.png)
 
 ---
 
