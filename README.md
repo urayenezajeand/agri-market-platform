@@ -1,6 +1,8 @@
 # AgriMarket Platform - Rwandan E-Commerce Marketplace
 
 **Course Name & Code:** EWA408510 – E-Commerce and Web Application  
+**Student Name:** URAYENEZA Jean De Dieu  
+**Registration Number:** 21068/2023  
 **Instructor:** Eric Maniraguha  
 **Institution:** University of Lay Adventists of Kigali (UNILAK)  
 **Academic Year:** 2025-2026  
