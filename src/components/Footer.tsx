@@ -129,11 +129,11 @@ export default function Footer() {
           <ul className="space-y-2 text-xs font-bold leading-normal">
             <li className="flex items-start space-x-2">
               <span className="text-emerald-500">📍</span>
-              <span>Kigali Heights, 4th Floor, Kigali, Rwanda</span>
+              <span>Nyanza, Busasamana kuri 40</span>
             </li>
             <li className="flex items-center space-x-2">
               <span className="text-emerald-500">📞</span>
-              <span>+250 788 123 456</span>
+              <span>0781664354</span>
             </li>
             <li className="flex items-center space-x-2">
               <span className="text-emerald-500">✉️</span>
