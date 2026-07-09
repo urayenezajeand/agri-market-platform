@@ -2,6 +2,8 @@
 **Course:** EWA408510 – E-Commerce and Web Application  
 **Assessment:** Final Examination (Project-Based)  
 **Academic Year:** 2025-2026  
+**Student Name:** URAYENEZA Jean De Dieu  
+**Registration Number:** 21068/2023  
 **Instructor:** Eric Maniraguha  
 **Institution:** University of Lay Adventists of Kigali (UNILAK)  
 

@@ -116,5 +116,6 @@ The database manages relationships between:
 
 ## 📞 Instructor Contacts & Credits
 * **Instructor:** Eric Maniraguha (UNILAK Faculty of Computing)
-* **Student Project ID:** JADO - E-COMMERCE  
+* **Student Name:** URAYENEZA Jean De Dieu
+* **Registration Number:** 21068/2023
 * **Academic Year:** 2025-2026
