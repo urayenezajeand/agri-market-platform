@@ -118,7 +118,7 @@ export default function Navbar() {
   return (
     <>
       {/* 1. CLEAN MODERN UNIFIED HEADER */}
-      <header className="bg-white border-b border-[#DFDACA] text-stone-800 px-4 py-3.5 shadow-sm z-50 sticky top-0">
+      <header className="bg-white border-b border-[#DFDACA] text-stone-800 px-2.5 sm:px-4 py-2.5 sm:py-3.5 shadow-sm z-50 sticky top-0">
         <div className="mx-auto max-w-7xl flex items-center justify-between gap-4">
           
           {/* Logo & Mobile Menu Buttons */}
@@ -133,13 +133,13 @@ export default function Navbar() {
                 <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
               </svg>
             </button>
-
+ 
             <Link to="/" className="flex items-center space-x-2 text-xl font-bold tracking-tight">
               {/* Leaf Logo SVG (Emerald green) */}
               <svg xmlns="http://www.w3.org/2000/svg" className="h-7 w-7 text-emerald-600 fill-current" viewBox="0 0 24 24">
                 <path d="M17 8C8 10 5.9 16.12 5 19c2.88-.9 9-3 11-12h1zm2-3c-3 1-13.22 4.78-15 16 0 0 2.22-11.22 16-15.5V5zM4.5 19A1.5 1.5 0 113 20.5 1.5 1.5 0 014.5 19z"/>
               </svg>
-              <span className="text-slate-900 font-black text-xl tracking-tight">
+              <span className="text-slate-900 font-black text-xl tracking-tight hidden min-[380px]:inline">
                 Agri<span className="text-emerald-600">Market</span>
               </span>
             </Link>
@@ -225,7 +225,7 @@ export default function Navbar() {
           <div className="flex items-center space-x-4 md:space-x-6 text-sm shrink-0">
             {/* Cart Button */}
             {isBuyer && (
-              <Link to="/cart" className="relative flex items-center space-x-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 px-3.5 py-2.5 rounded-xl border border-emerald-100 transition-all duration-300 hover:scale-[1.03] active:scale-[0.97] shadow-sm">
+              <Link to="/cart" className="relative flex items-center space-x-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 p-2 sm:px-3.5 sm:py-2.5 rounded-xl border border-emerald-100 transition-all duration-300 hover:scale-[1.03] active:scale-[0.97] shadow-sm">
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-emerald-700 fill-none stroke-current stroke-2" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
                 </svg>
@@ -342,8 +342,11 @@ export default function Navbar() {
                 )}
               </div>
             ) : (
-              <Link to="/login" className="flex items-center space-x-1.5 bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2.5 rounded-xl transition-all duration-300 hover:scale-[1.03] active:scale-[0.97] font-bold text-xs shadow-sm">
-                <span>Sign In</span>
+              <Link to="/login" className="flex items-center justify-center bg-emerald-600 hover:bg-emerald-700 text-white p-2.5 sm:px-4 sm:py-2.5 rounded-xl transition-all duration-300 hover:scale-[1.03] active:scale-[0.97] font-bold text-xs shadow-sm">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4.5 w-4.5 sm:h-4 sm:w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
+                </svg>
+                <span className="hidden sm:inline ml-1.5">Sign In</span>
               </Link>
             )}
           </div>
