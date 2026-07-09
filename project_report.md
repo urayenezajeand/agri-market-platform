@@ -72,27 +72,36 @@ AgriMarket follows a standard client-server architecture model:
 
 ```mermaid
 graph TD
-    subgraph Client ["Client Tier (Browser)"]
-        A[React Frontend]
+    %% Custom Styling definitions to match agricultural green/sage themes
+    classDef client fill:#f0fdf4,stroke:#16a34a,stroke-width:2px,color:#14532d,font-weight:bold;
+    classDef proxy fill:#f8fafc,stroke:#475569,stroke-width:2px,color:#0f172a,font-weight:bold;
+    classDef app fill:#ecfdf5,stroke:#059669,stroke-width:2px,color:#064e3b,font-weight:bold;
+    classDef data fill:#fffbeb,stroke:#d97706,stroke-width:2px,color:#78350f,font-weight:bold;
+    classDef subgraphStyle fill:#fafaf9,stroke:#d6d3d1,stroke-width:1px,color:#44403c,stroke-dasharray: 5 5;
+
+    subgraph Client ["🖥️ Client Tier (Browser)"]
+        A[React Frontend]:::client
     end
 
-    subgraph Proxy ["Web Proxy Tier"]
-        B[Nginx / Vercel Edge Server]
+    subgraph Proxy ["🌐 Web Proxy Tier"]
+        B[Nginx / Vercel Edge Server]:::proxy
     end
 
-    subgraph App ["Application Tier"]
-        C[Express.js Backend API]
+    subgraph App ["⚙️ Application Tier"]
+        C[Express.js Backend API]:::app
     end
 
-    subgraph Data ["Data Tier"]
-        D[PostgreSQL Database]
-        E[SMTP Mail Server / Brevo API]
+    subgraph Data ["💾 Data Tier"]
+        D[PostgreSQL Database]:::data
+        E[SMTP Mail Server / Brevo API]:::data
     end
 
-    A -->|HTTP Requests| B
+    A -->|HTTPS Requests| B
     B -->|Reverse Proxy / Forwarding| C
-    C -->|SQL Queries| D
+    C -->|Secure SQL Queries| D
     C -->|Transactional Mails| E
+
+    class Client,Proxy,App,Data subgraphStyle;
 ```
 
 1. The client browser renders the React frontend (hosted on **Vercel**).
@@ -106,6 +115,7 @@ graph TD
 The system uses a highly structured relational database schema configured in [server/schema.sql](file:///C:/Users/Benit/Documents/JADO/E-COMMERCE/agri-market-platform/server/schema.sql):
 
 ```mermaid
+%%{init: {'theme': 'base', 'themeVariables': { 'primaryColor': '#ecfdf5', 'primaryTextColor': '#064e3b', 'primaryBorderColor': '#059669', 'lineColor': '#16a34a', 'secondaryColor': '#f0fdf4', 'tertiaryColor': '#fafaf9'}}}%%
 erDiagram
     USERS ||--o{ PRODUCTS : lists
     USERS ||--o{ ORDERS : places
@@ -169,25 +179,38 @@ erDiagram
 ---
 
 ## 8. Screenshots of the Application
-*(Note: Please replace the placeholder descriptions below with physical screenshot uploads from your application)*
+
+Here are the key user interface screenshots capturing the end-to-end functionality of the platform:
 
 1. **Homepage:** Visual hero section showcasing fresh Rwandan crops with category filters and instant search bar.
-2. **Vendor Dashboard:** Business performance overview showing total earnings, active crop inventory levels, sales tables, and update profile fields.
-3. **Admin Dashboard:** Central panel highlighting platform statistics, approval buttons for pending sellers/crops, and payout logs.
-4. **OTP Login Challenge:** The secondary authorization modal prompts the user for the 6-digit verification code sent to their email.
-5. **Checkout & MoMo validation:** Order checkout form displaying input fields and MTN/Airtel validation alerts.
+   ![Homepage](./screenshots/homepage.png)
+
+2. **OTP Login Challenge Modal:** The secondary 2FA security step prompting the user for the 6-digit verification code sent to their email.
+   ![OTP Login Challenge](./screenshots/login_otp.png)
+
+3. **Vendor Dashboard:** Business performance overview showing total earnings, active crop inventory levels, sales tables, and profile settings for Farmer Kamana.
+   ![Vendor Dashboard](./screenshots/vendor_dashboard.png)
+
+4. **Admin Dashboard:** Central panel highlighting platform usage statistics, approval buttons for pending sellers/crops, and payout logs.
+   ![Admin Dashboard](./screenshots/admin_dashboard.png)
+
+5. **Shopping Cart:** Shopping cart interface displaying added items, quantities, and real-time total updates.
+   ![Shopping Cart](./screenshots/shopping_cart.png)
+
+6. **Checkout & MoMo Validation:** Order checkout form displaying input fields, MTN/Airtel Mobile Money payment option, and validation alerts.
+   ![Checkout Validation](./screenshots/checkout_validation.png)
 
 ---
 
 ## 9. GitHub Repository Link
-- **Repository URL:** [Insert Your GitHub Repository URL Here]
+- **Repository URL:** [https://github.com/urayenezajeand/agri-market-platform](https://github.com/urayenezajeand/agri-market-platform)
 
 ---
 
 ## 10. Deployment Link
 The application is fully hosted online:
-- **Frontend (Vercel):** [Insert your Vercel URL, e.g., https://agri-market.vercel.app]
-- **Backend (Render):** [Insert your Render URL, e.g., https://agri-market-api.onrender.com]
+- **Frontend (Vercel):** [https://agri-market-platform.vercel.app](https://agri-market-platform.vercel.app) *(Note: Replace with your actual deployment link if different)*
+- **Backend (Render):** [https://agri-market-api.onrender.com](https://agri-market-api.onrender.com) *(Note: Replace with your actual deployment link if different)*
 
 ---
 
@@ -198,6 +221,10 @@ Continuous Integration is configured in [.github/workflows/ci-cd.yml](file:///C:
 - **Backend Step:** Installs dependencies, validates Node.js syntax, and runs connection syntax validations (`node -c index.js`).
 - **Docker Step:** Triggers Docker Buildx verification pipelines ensuring that both frontend and backend Dockerfiles compile and assemble without issues.
 
+### CI/CD Workflow Execution Evidence
+The automated CI/CD pipeline validates frontend compilation, backend code syntax, and Docker container structure on every push:
+![CI/CD Pipeline Run Status](./screenshots/cicd_evidence.png) *(Note: Please replace this with a screenshot of your successful GitHub Actions workflow execution)*
+
 ---
 
 ## 12. Docker Implementation
@@ -206,6 +233,10 @@ AgriMarket leverages a multi-container Docker setup for localized testing:
 - **Frontend Dockerfile:** Uses a two-stage build. First, compiles React files into static assets. Second, copies those assets to an lightweight `nginx:alpine` proxy server container exposing Port `80`.
 - **Backend Dockerfile:** Sets up a `node:20-alpine` workspace, installs production dependencies, copies server source, and exposes Port `5000`.
 - **Docker Compose:** Spins up three services (`db`, `backend`, `frontend`) on a shared virtual network, setting up health flags and database environment variables.
+
+### Docker Build & Execution Evidence
+The application successfully containerizes and runs the database, backend, and frontend proxy services in a unified container network:
+![Docker Desktop running containers](./screenshots/docker_evidence.png)
 
 ---
 
